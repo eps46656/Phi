@@ -197,7 +197,7 @@ function.
 
 template<typename LessThanComparer>
 struct ConstructFullComparerWithLessThanComparer {
-	LessThanComparer lt_cmper;
+	const LessThanComparer& lt_cmper;
 
 	template<typename... Args>
 	ConstructFullComparerWithLessThanComparer(Args&&... args):
@@ -374,7 +374,7 @@ struct DefaultFullComparer {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename FullComparer> struct ReverseFullComparer {
-	FullComparer full_cmper;
+	const FullComparer& full_cmper;
 
 	template<typename... Args>
 	ReverseFullComparer(Args&&... args): full_cmper(Forward<Args>(args)...) {}

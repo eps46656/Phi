@@ -38,7 +38,7 @@ Returns the number of elements equaling to target in range
 template<typename Src, typename Target,
 		 typename EqualComparer = DefaultEqualComparer>
 size_t Count(size_t lower, size_t upper, const Src& src, const Target& target,
-			 EqualComparer eq_cmper = EqualComparer()) {
+			 const EqualComparer& eq_cmper = EqualComparer()) {
 	size_t r(0);
 
 	for (size_t i(lower); i != upper; ++i) {
@@ -56,7 +56,7 @@ Returns the number of elements equaling to target in range
 template<typename Src, typename Target,
 		 typename EqualComparer = DefaultEqualComparer>
 size_t Count(size_t size, const Src& src, const Target& target,
-			 EqualComparer eq_cmper = EqualComparer()) {
+			 const EqualComparer& eq_cmper = EqualComparer()) {
 	return Count(0, size, src, target, eq_cmper);
 }
 
@@ -68,7 +68,7 @@ Returns the number of elements equaling to target in range
 template<typename ForwardIterator, typename Target,
 		 typename EqualComparer = DefaultEqualComparer>
 size_t Count(ForwardIterator begin, ForwardIterator end, const Target& target,
-			 EqualComparer eq_cmper = EqualComparer()) {
+			 const EqualComparer& eq_cmper = EqualComparer()) {
 	size_t r(0);
 
 	for (; begin != end; ++begin) {
@@ -90,7 +90,7 @@ undefined which index will return.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 size_t Min(size_t lower, size_t upper, Src& src,
-		   LessThanComparer&& lt_cmper = LessThanComparer()) {
+		   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (lower == upper) { return upper; }
 
 	size_t r(lower);
@@ -110,7 +110,7 @@ undefined which index will return.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 size_t Min(size_t size, Src& src,
-		   LessThanComparer&& lt_cmper = LessThanComparer()) {
+		   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	return Min(0, size, src, lt_cmper);
 }
 
@@ -123,7 +123,7 @@ undefined which index will return.
 template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 ForwardIterator Min(ForwardIterator begin, ForwardIterator end,
-					LessThanComparer&& lt_cmper = LessThanComparer()) {
+					const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (begin == end) { return end; }
 
 	ForwardIterator r(begin);
@@ -145,7 +145,7 @@ undefined which index will return.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 size_t Max(size_t lower, size_t upper, Src& src,
-		   LessThanComparer&& lt_cmper = LessThanComparer()) {
+		   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (lower == upper) { return upper; }
 
 	size_t r(lower);
@@ -165,7 +165,7 @@ undefined which index will return.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 size_t Max(size_t size, Src& src,
-		   LessThanComparer&& lt_cmper = LessThanComparer()) {
+		   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	return Max(0, size, src, lt_cmper);
 }
 
@@ -178,7 +178,7 @@ undefined which index will return.
 template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
-					LessThanComparer&& lt_cmper = LessThanComparer()) {
+					const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (begin == end) { return end; }
 
 	ForwardIterator r(begin);
@@ -205,9 +205,9 @@ Uses lt_cmper to compare two elements. Uses swapper to swap elemenets.
 template<typename Src, typename Pivot,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
-size_t TwoWayPartition(size_t lower, size_t upper, Src& src, Pivot&& pivot,
-					   LessThanComparer&& lt_cmper = LessThanComparer(),
-					   Swapper&& swapper = Swapper()) {
+size_t TwoWayPartition(size_t lower, size_t upper, Src& src, const Pivot& pivot,
+					   const LessThanComparer& lt_cmper = LessThanComparer(),
+					   const Swapper& swapper = Swapper()) {
 	if (lower == upper) { return lower; }
 
 	size_t a(lower);
@@ -243,9 +243,9 @@ template<typename Src, typename Pivot,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 pair<size_t, size_t>
-TwoWayPartition(size_t size, Src& src, Pivot&& pivot,
-				LessThanComparer&& lt_cmper = LessThanComparer(),
-				Swapper&& swapper = Swapper()) {
+TwoWayPartition(size_t size, Src& src, const Pivot& pivot,
+				const LessThanComparer& lt_cmper = LessThanComparer(),
+				const Swapper& swapper = Swapper()) {
 	return TwoWayPartition(0, size, src, pivot, lt_cmper, swapper);
 }
 
@@ -264,9 +264,9 @@ template<typename Src, typename Pivot,
 		 typename FullComparer = DefaultFullComparer,
 		 typename Swapper = DefaultSwapper>
 pair<size_t, size_t>
-ThreeWayPartition(size_t lower, size_t upper, Src& src, Pivot&& pivot,
-				  FullComparer&& full_cmper = FullComparer(),
-				  Swapper&& swapper = Swapper()) {
+ThreeWayPartition(size_t lower, size_t upper, Src& src, const Pivot& pivot,
+				  const FullComparer& full_cmper = FullComparer(),
+				  const Swapper& swapper = Swapper()) {
 #define PHI__cmp(x) (full_cmper(x, pivot))
 	size_t size(upper - lower);
 
@@ -346,9 +346,9 @@ template<typename Src, typename Pivot,
 		 typename FullComparer = DefaultFullComparer,
 		 typename Swapper = DefaultSwapper>
 pair<size_t, size_t>
-ThreeWayPartition(size_t size, Src& src, Pivot&& pivot,
-				  FullComparer&& full_cmper = FullComparer(),
-				  Swapper&& swapper = Swapper()) {
+ThreeWayPartition(size_t size, Src& src, const Pivot& pivot,
+				  const FullComparer& full_cmper = FullComparer(),
+				  const Swapper& swapper = Swapper()) {
 	return ThreeWayPartition(0, size, src, pivot, full_cmper, swapper);
 }
 
@@ -363,7 +363,7 @@ Uses swapper to swap elemenets.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 void InsertionSort(size_t lower, size_t upper, Src& src,
-				   LessThanComparer&& lt_cmper = LessThanComparer()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (upper - lower < 2) { return; }
 
 	size_t i(upper - 1);
@@ -395,7 +395,7 @@ Uses swapper to swap elemenets.
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer>
 void InsertionSort(size_t size, Src& src,
-				   LessThanComparer&& lt_cmper = LessThanComparer()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	InsertionSort(0, size, src, lt_cmper);
 }
 
@@ -407,7 +407,7 @@ Uses swapper to swap elemenets.
 template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void InsertionSort(BidirectionalIterator begin, BidirectionalIterator end,
-				   LessThanComparer&& lt_cmper = LessThanComparer()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer()) {
 	if (begin == end) { return; }
 
 	BidirectionalIterator i(end);
@@ -450,8 +450,8 @@ Uses swapper to swap elemenets.
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void BubbleSort(size_t lower, size_t upper, Src& src,
-				LessThanComparer&& lt_cmper = LessThanComparer(),
-				Swapper&& swapper = Swapper()) {
+				const LessThanComparer& lt_cmper = LessThanComparer(),
+				const Swapper& swapper = Swapper()) {
 	if (upper - lower < 2) { return; }
 
 	while (--upper != lower) {
@@ -471,8 +471,8 @@ Uses swapper to swap elemenets.
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void BubbleSort(size_t size, Src& src,
-				LessThanComparer&& lt_cmper = LessThanComparer(),
-				Swapper&& swapper = Swapper()) {
+				const LessThanComparer& lt_cmper = LessThanComparer(),
+				const Swapper& swapper = Swapper()) {
 	BubbleSort(0, size, src, lt_cmper, swapper);
 }
 
@@ -485,8 +485,8 @@ template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void BubbleSort(ForwardIterator begin, ForwardIterator end,
-				LessThanComparer&& lt_cmper = LessThanComparer(),
-				Swapper&& swapper = Swapper()) {
+				const LessThanComparer& lt_cmper = LessThanComparer(),
+				const Swapper& swapper = Swapper()) {
 	if (begin == end) { return; }
 
 	ForwardIterator i(begin);
@@ -518,8 +518,8 @@ Uses swapper to swap elemenets.
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void SelectionSort(size_t lower, size_t upper, Src& src,
-				   LessThanComparer&& lt_cmper = LessThanComparer(),
-				   Swapper&& swapper = Swapper()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer(),
+				   const Swapper& swapper = Swapper()) {
 	for (; lower != upper; ++lower) {
 		swapper(src[lower], src[Min(lower, upper, src, lt_cmper)]);
 	}
@@ -533,8 +533,8 @@ Uses swapper to swap elemenets.
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void SelectionSort(size_t size, Src& src,
-				   LessThanComparer&& lt_cmper = LessThanComparer(),
-				   Swapper&& swapper = Swapper()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer(),
+				   const Swapper& swapper = Swapper()) {
 	SelectionSort(0, size, src, lt_cmper, swapper);
 }
 
@@ -547,8 +547,8 @@ template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void SelectionSort(ForwardIterator begin, ForwardIterator end,
-				   LessThanComparer&& lt_cmper = LessThanComparer(),
-				   Swapper&& swapper = Swapper()) {
+				   const LessThanComparer& lt_cmper = LessThanComparer(),
+				   const Swapper& swapper = Swapper()) {
 	for (; begin != end; ++begin) {
 		swapper(*begin, *Min(begin, end, lt_cmper));
 	}
@@ -562,7 +562,7 @@ struct DefaultMakePivotAtLowerFunc {
 	template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 			 typename Swapper>
 	void operator()(size_t lower, size_t upper, Src& src,
-					LessThanComparer&& lt_cmper, Swapper&& swapper) {
+					const LessThanComparer& lt_cmper, const Swapper& swapper) {
 		size_t mid = (upper - lower) / 2;
 
 		if (lt_cmper.lt(src[lower], src[mid])) {
@@ -588,8 +588,8 @@ template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
 void TwoWayQuickSort(
 	size_t lower, size_t upper, Src& src,
-	LessThanComparer&& lt_cmper = LessThanComparer(),
-	Swapper&& swapper = Swapper(),
+	const LessThanComparer& lt_cmper = LessThanComparer(),
+	const Swapper& swapper = Swapper(),
 	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 #define PHI__quick_sort_a                                                      \
 	TwoWayQuickSort(lower, p, src, lt_cmper, swapper, make_pivot_at_lower)
@@ -626,8 +626,9 @@ template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper,
 		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
 void TwoWayQuickSort(
-	size_t size, Src& src, LessThanComparer&& lt_cmper = LessThanComparer(),
-	Swapper&& swapper = Swapper(),
+	size_t size, Src& src,
+	const LessThanComparer& lt_cmper = LessThanComparer(),
+	const Swapper& swapper = Swapper(),
 	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 	TwoWayQuickSort(0, size, src, lt_cmper, swapper, make_pivot_at_lower);
 }
@@ -639,7 +640,8 @@ template<typename Src, typename FullComparer = DefaultFullComparer,
 		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
 void ThreeWayQuickSort(
 	size_t lower, size_t upper, Src& src,
-	FullComparer&& full_cmper = FullComparer(), Swapper&& swapper = Swapper(),
+	const FullComparer& full_cmper = FullComparer(),
+	const Swapper& swapper = Swapper(),
 	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 #define PHI__quick_sort_a                                                      \
 	ThreeWayQuickSort(lower, p.first, src, full_cmper, swapper,                \
@@ -678,10 +680,62 @@ template<typename Src, typename FullComparer = DefaultFullComparer,
 		 typename Swapper = DefaultSwapper,
 		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
 void ThreeWayQuickSort(
-	size_t size, Src& src, FullComparer&& full_cmper = FullComparer(),
-	Swapper&& swapper = Swapper(),
+	size_t size, Src& src, const FullComparer& full_cmper = FullComparer(),
+	const Swapper& swapper = Swapper(),
 	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 	ThreeWayQuickSort(0, size, src, full_cmper, swapper, make_pivot_at_lower);
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void Heapify(size_t lower, size_t upper, size_t i, Src& src,
+			 const LessThanComparer& lt_cmper = LessThanComparer(),
+			 const Swapper& swapper = Swapper()) {
+	for (;;) {
+		size_t largest(i);
+		size_t l(lower + (largest - lower) * 2 + 1);
+		size_t r(l + 1);
+
+		if (l < upper && lt_cmper.lt(src[largest], src[l])) { largest = l; }
+		if (r < upper && lt_cmper.lt(src[largest], src[r])) { largest = r; }
+
+		if (largest == i) { break; }
+
+		swapper(src[i], src[largest]);
+		i = largest;
+	}
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void HeapSort(size_t lower, size_t upper, Src& src,
+			  const LessThanComparer& lt_cmper = LessThanComparer(),
+			  const Swapper& swapper = Swapper()) {
+	size_t size(upper - lower);
+
+	if (size < 2) { return; }
+
+	for (size_t i(size / 2); i != 0;) {
+		--i;
+		Heapify(lower, upper, lower + i, src, lt_cmper, swapper);
+	}
+
+	while (1 < upper - lower) {
+		swapper(src[lower], src[--upper]);
+		Heapify(lower, upper, lower, src, lt_cmper, swapper);
+	}
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void HeapSort(size_t size, Src& src,
+			  const LessThanComparer& lt_cmper = LessThanComparer(),
+			  const Swapper& swapper = Swapper()) {
+	HeapSort(0, size, src, lt_cmper, swapper);
 }
 
 }
