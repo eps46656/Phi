@@ -2,6 +2,7 @@
 #define PHI__define_guard__Utility__memory_op_h
 
 #include "../define.h"
+#include "memory.h"
 #include "compare.h"
 #include "swap.h"
 
@@ -154,12 +155,6 @@ bool Equal(size_t size, X& x, Y& y, EqualComparer eq_cmper = EqualComparer()) {
 	return true;
 }
 
-inline void Memcpy(size_t size, void* dst, const void* src) {
-	for (size_t i(0); i != size; ++i) {
-		static_cast<char*>(dst)[i] = static_cast<const char*>(src)[i];
-	}
-}
-
 inline void MemcpyForward(size_t size, void* dst, const void* src) {
 	for (size_t i(0); i != size; ++i) {
 		static_cast<char*>(dst)[i] = static_cast<const char*>(src)[i];
@@ -170,6 +165,17 @@ inline void MemcpyBackward(size_t size, void* dst, const void* src) {
 	while (size) {
 		--size;
 		static_cast<char*>(dst)[size] = static_cast<const char*>(src)[size];
+	}
+}
+
+inline void Memcpy(size_t size, void* dst, const void* src) {
+	if (dst == src) { return; }
+	if (static_cast<const char*>(src) < static_cast<char*>(dst) &&
+		static_cast<char*>(dst) < static_cast<const char*>(src) + size) {
+		std::cout << "b\n";
+		MemcpyBackward(size, dst, src);
+	} else {
+		MemcpyForward(size, dst, src);
 	}
 }
 
@@ -379,7 +385,6 @@ bool prev_permutation(BidirectionalIterator begin, BidirectionalIterator end,
 0 1 2 5 4 3
 
 */
-
 }
 
 #endif

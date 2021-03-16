@@ -5,18 +5,20 @@
 
 namespace phi {
 
-template<typename T> void DefaultSwap(T& x, T& y) {
+template<typename X, typename Y> void DefaultSwap(X&& x, Y&& y) {
 	if (&x == &y) { return; }
-	T temp(Move(x));
+	auto temp(Move(x));
 	x = Move(y);
 	y = Move(temp);
 }
 
-template<typename T> void Swap(T& x, T& y) { DefaultSwap(x, y); }
+template<typename X, typename Y> void Swap(X&& x, Y&& y) { DefaultSwap(x, y); }
 
 struct DefaultSwapper {
 public:
-	template<typename T> void operator()(T& x, T& y) const { Swap(x, y); }
+	template<typename X, typename Y> void operator()(X&& x, Y&& y) const {
+		Swap(x, y);
+	}
 };
 
 }

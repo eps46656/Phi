@@ -196,7 +196,7 @@ function.
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename LessThanComparer>
-class ConstructFullComparerWithLessThanComparer {
+struct ConstructFullComparerWithLessThanComparer {
 	LessThanComparer lt_cmper;
 
 	template<typename... Args>
@@ -207,6 +207,47 @@ class ConstructFullComparerWithLessThanComparer {
 		if (this->lt_cmper(x, y)) { return -1; }
 		if (this->lt_cmper(y, x)) { return 1; }
 		return 0;
+	}
+
+	template<typename X, typename Y> bool eq(X& x, Y& y) const {
+		return this->operator()(x, y) == 0;
+	}
+
+	template<typename X, typename Y> bool ne(X& x, Y& y) const {
+		return this->operator()(x, y) != 0;
+	}
+
+	template<typename X, typename Y> bool lt(X& x, Y& y) const {
+		return this->operator()(x, y) == -1;
+	}
+
+	template<typename X, typename Y> bool gt(X& x, Y& y) const {
+		return this->operator()(x, y) == 1;
+	}
+
+	template<typename X, typename Y> bool le(X& x, Y& y) const {
+		return this->operator()(x, y) != 1;
+	}
+
+	template<typename X, typename Y> bool ge(X& x, Y& y) const {
+		return this->operator()(x, y) != -1;
+	}
+};
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename FullComparerFunctionPtr>
+struct ConstructFullComparerWithFullComparerFunctionPtr {
+	FullComparerFunctionPtr full_cmper_func_ptr;
+
+	ConstructFullComparerWithFullComparerFunctionPtr(
+		FullComparerFunctionPtr full_cmper_func_ptr):
+		full_cmper_func_ptr(full_cmper_func_ptr) {}
+
+	template<typename X, typename Y> int operator()(X& x, Y& y) const {
+		return this->full_cmper_func_ptr(x, y);
 	}
 
 	template<typename X, typename Y> bool eq(X& x, Y& y) const {
@@ -300,8 +341,7 @@ struct DefaultHalfComparer {
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-class DefaultFullComparer {
-public:
+struct DefaultFullComparer {
 	template<typename X, typename Y> int operator()(X& x, Y& y) const {
 		if (x < y) { return -1; }
 		if (y < x) { return 1; }
@@ -333,7 +373,7 @@ public:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename FullComparer> class ReverseFullComparer {
+template<typename FullComparer> struct ReverseFullComparer {
 	FullComparer full_cmper;
 
 	template<typename... Args>
