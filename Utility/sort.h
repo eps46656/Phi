@@ -452,14 +452,31 @@ template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 void BubbleSort(size_t lower, size_t upper, Src& src,
 				const LessThanComparer& lt_cmper = LessThanComparer(),
 				const Swapper& swapper = Swapper()) {
-	if (upper - lower < 2) { return; }
+	size_t first_swap(lower);
 
-	while (--upper != lower) {
-		for (size_t i(lower); i != upper; ++i) {
+	while (1 < upper - lower) {
+		size_t last_swap(lower + 1);
+
+		size_t i(first_swap != lower ? first_swap - 1 : lower + 1);
+
+		for (; i != upper - 1; ++i) {
 			if (lt_cmper.lt(src[i + 1], src[i])) {
 				swapper(src[i], src[i + 1]);
+				first_swap = i;
+				last_swap = i + 1;
+				++i;
+				break;
 			}
 		}
+
+		for (; i != upper - 1; ++i) {
+			if (lt_cmper.lt(src[i + 1], src[i])) {
+				swapper(src[i], src[i + 1]);
+				last_swap = i + 1;
+			}
+		}
+
+		upper = last_swap;
 	}
 }
 
@@ -562,7 +579,8 @@ struct DefaultMakePivotAtLowerFunc {
 	template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 			 typename Swapper>
 	void operator()(size_t lower, size_t upper, Src& src,
-					const LessThanComparer& lt_cmper, const Swapper& swapper) {
+					const LessThanComparer& lt_cmper,
+					const Swapper& swapper) const {
 		size_t mid = (upper - lower) / 2;
 
 		if (lt_cmper.lt(src[lower], src[mid])) {
@@ -590,7 +608,7 @@ void TwoWayQuickSort(
 	size_t lower, size_t upper, Src& src,
 	const LessThanComparer& lt_cmper = LessThanComparer(),
 	const Swapper& swapper = Swapper(),
-	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 #define PHI__quick_sort_a                                                      \
 	TwoWayQuickSort(lower, p, src, lt_cmper, swapper, make_pivot_at_lower)
 #define PHI__quick_sort_b                                                      \
@@ -609,11 +627,9 @@ void TwoWayQuickSort(
 
 		if (a_size < b_size) {
 			PHI__quick_sort_a;
-
 			lower = p + 1;
 		} else {
 			PHI__quick_sort_b;
-
 			upper = p;
 		}
 	}
@@ -629,7 +645,7 @@ void TwoWayQuickSort(
 	size_t size, Src& src,
 	const LessThanComparer& lt_cmper = LessThanComparer(),
 	const Swapper& swapper = Swapper(),
-	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 	TwoWayQuickSort(0, size, src, lt_cmper, swapper, make_pivot_at_lower);
 }
 
@@ -642,7 +658,7 @@ void ThreeWayQuickSort(
 	size_t lower, size_t upper, Src& src,
 	const FullComparer& full_cmper = FullComparer(),
 	const Swapper& swapper = Swapper(),
-	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 #define PHI__quick_sort_a                                                      \
 	ThreeWayQuickSort(lower, p.first, src, full_cmper, swapper,                \
 					  make_pivot_at_lower);
@@ -663,11 +679,9 @@ void ThreeWayQuickSort(
 
 		if (a_size < b_size) {
 			PHI__quick_sort_a;
-
 			lower = p.second;
 		} else {
 			PHI__quick_sort_b;
-
 			upper = p.first;
 		}
 	}
@@ -682,7 +696,7 @@ template<typename Src, typename FullComparer = DefaultFullComparer,
 void ThreeWayQuickSort(
 	size_t size, Src& src, const FullComparer& full_cmper = FullComparer(),
 	const Swapper& swapper = Swapper(),
-	MakePivotAtLowerFunc&& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
 	ThreeWayQuickSort(0, size, src, full_cmper, swapper, make_pivot_at_lower);
 }
 
@@ -696,9 +710,9 @@ void Heapify(size_t lower, size_t upper, size_t i, Src& src,
 			 const LessThanComparer& lt_cmper = LessThanComparer(),
 			 const Swapper& swapper = Swapper()) {
 	for (;;) {
-		size_t largest(i);
-		size_t l(lower + (largest - lower) * 2 + 1);
+		size_t l(lower + (i - lower) * 2 + 1);
 		size_t r(l + 1);
+		size_t largest(i);
 
 		if (l < upper && lt_cmper.lt(src[largest], src[l])) { largest = l; }
 		if (r < upper && lt_cmper.lt(src[largest], src[r])) { largest = r; }
@@ -708,6 +722,14 @@ void Heapify(size_t lower, size_t upper, size_t i, Src& src,
 		swapper(src[i], src[largest]);
 		i = largest;
 	}
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void Heapify(size_t size, size_t i, Src& src,
+			 const LessThanComparer& lt_cmper = LessThanComparer(),
+			 const Swapper& swapper = Swapper()) {
+	Heapify(0, size, i, src, lt_cmper, swapper);
 }
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
@@ -737,6 +759,139 @@ void HeapSort(size_t size, Src& src,
 			  const Swapper& swapper = Swapper()) {
 	HeapSort(0, size, src, lt_cmper, swapper);
 }
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+#define PHI__intro_sort_depth_limit 16
+
+template<typename Src, typename LessThanComparer, typename Swapper,
+		 typename MakePivotAtLowerFunc>
+void TwoWayIntroSort_(
+	size_t depth_limit, size_t lower, size_t upper, Src& src,
+	const LessThanComparer& lt_cmper, const Swapper& swapper,
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	if (depth_limit == 0) { HeapSort(lower, upper, src, lt_cmper, swapper); }
+
+#define PHI__intro_sort_a                                                      \
+	TwoWayIntroSort_(depth_limit - 1, lower, p, src, lt_cmper, swapper,        \
+					 make_pivot_at_lower)
+#define PHI__intro_sort_b                                                      \
+	TwoWayIntroSort_(depth_limit - 1, p + 1, upper, src, lt_cmper, swapper,    \
+					 make_pivot_at_lower)
+
+	while (1 < upper - lower) {
+		make_pivot_at_lower(lower, upper, src, lt_cmper, swapper);
+
+		size_t p(TwoWayPartition(lower + 1, upper, src, src[lower], lt_cmper,
+								 swapper));
+
+		swapper(src[lower], src[--p]);
+
+		bool a_size(p - lower);
+		bool b_size(upper - p);
+
+		if (a_size < b_size) {
+			PHI__intro_sort_a;
+			lower = p + 1;
+		} else {
+			PHI__intro_sort_b;
+			upper = p;
+		}
+	}
+
+#undef PHI__intro_sort_a
+#undef PHI__intro_sort_b
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper,
+		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
+void TwoWayIntroSort(
+	size_t lower, size_t upper, Src& src,
+	const LessThanComparer& lt_cmper = LessThanComparer(),
+	const Swapper& swapper = Swapper(),
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	TwoWayIntroSort_(PHI__intro_sort_depth_limit, lower, upper, src, lt_cmper,
+					 swapper, make_pivot_at_lower);
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper,
+		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
+void TwoWayIntroSort(
+	size_t size, Src& src,
+	const LessThanComparer& lt_cmper = LessThanComparer(),
+	const Swapper& swapper = Swapper(),
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	TwoWayIntroSort(0, size, src, lt_cmper, swapper, make_pivot_at_lower);
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Src, typename FullComparer, typename Swapper,
+		 typename MakePivotAtLowerFunc>
+void ThreeWayIntroSort_(
+	size_t depth_limit, size_t lower, size_t upper, Src& src,
+	const FullComparer& full_cmper, const Swapper& swapper,
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	if (depth_limit == 0) { HeapSort(lower, upper, src, full_cmper, swapper); }
+
+#define PHI__intro_sort_a                                                      \
+	ThreeWayIntroSort_(depth_limit - 1, lower, p.first, src, full_cmper,       \
+					   swapper, make_pivot_at_lower)
+#define PHI__intro_sort_b                                                      \
+	ThreeWayIntroSort_(depth_limit - 1, p.second, upper, src, full_cmper,      \
+					   swapper, make_pivot_at_lower)
+
+	while (1 < upper - lower) {
+		make_pivot_at_lower(lower, upper, src, full_cmper, swapper);
+
+		pair<size_t, size_t> p(ThreeWayPartition(
+			lower + 1, upper, src, src[lower], full_cmper, swapper));
+
+		swapper(src[lower], src[--p.first]);
+
+		bool a_size(p.first - lower);
+		bool b_size(upper - p.second);
+
+		if (a_size < b_size) {
+			PHI__intro_sort_a;
+			lower = p.second;
+		} else {
+			PHI__intro_sort_b;
+			upper = p.first;
+		}
+	}
+
+#undef PHI__intro_sort_a
+#undef PHI__intro_sort_b
+}
+
+template<typename Src, typename FullComparer = DefaultFullComparer,
+		 typename Swapper = DefaultSwapper,
+		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
+void ThreeWayIntroSort(
+	size_t lower, size_t upper, Src& src,
+	const FullComparer& full_cmper = FullComparer(),
+	const Swapper& swapper = Swapper(),
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	ThreeWayIntroSort_(PHI__intro_sort_depth_limit, lower, upper, src,
+					   full_cmper, swapper, make_pivot_at_lower);
+}
+
+template<typename Src, typename FullComparer = DefaultFullComparer,
+		 typename Swapper = DefaultSwapper,
+		 typename MakePivotAtLowerFunc = DefaultMakePivotAtLowerFunc>
+void ThreeWayIntroSort(
+	size_t size, Src& src, const FullComparer& full_cmper = FullComparer(),
+	const Swapper& swapper = Swapper(),
+	const MakePivotAtLowerFunc& make_pivot_at_lower = MakePivotAtLowerFunc()) {
+	ThreeWayIntroSort(0, size, src, full_cmper, swapper, make_pivot_at_lower);
+}
+
+#undef PHI__intro_sort_depth_limit
 
 }
 
