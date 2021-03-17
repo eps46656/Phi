@@ -216,18 +216,16 @@ size_t TwoWayPartition(size_t lower, size_t upper, Src& src, const Pivot& pivot,
 
 	while (a != b) {
 		while (!lt_cmper.lt(pivot, src[a])) {
-			if (++a == b) { goto a_eq_b; }
+			if (++a == b) { return lt_cmper.lt(src[a], pivot) ? a + 1 : a; }
 		}
 
 		while (!lt_cmper.lt(src[b], pivot)) {
-			if (a == --b) { goto a_eq_b; }
+			if (a == --b) { return a; }
 		}
 
 		swapper(src[a], src[b]);
 		if (--b < ++a) { return a; }
 	}
-
-a_eq_b:;
 
 	return lt_cmper.lt(src[a], pivot) ? a + 1 : a;
 }
@@ -658,6 +656,8 @@ void TwoWayQuickSort(size_t lower, size_t upper, Src& src,
 					 const LessThanComparer& lt_cmper = LessThanComparer(),
 					 const Swapper& swapper = Swapper()) {
 	while (2 < upper - lower) {
+		swapper(src[lower], src[rand(lower + 1, upper - 1)]);
+
 		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
 		}
@@ -685,15 +685,8 @@ void TwoWayQuickSort(size_t lower, size_t upper, Src& src,
 		}
 	}
 
-	switch (upper - lower) {
-		case 0: break;
-		case 1: break;
-		case 2:
-			if (lt_cmper.lt(src[upper - 1], src[lower])) {
-				swapper(src[lower], src[upper - 1]);
-			}
-
-			break;
+	if ((upper - lower == 2) && lt_cmper.lt(src[upper - 1], src[lower])) {
+		swapper(src[lower], src[upper - 1]);
 	}
 }
 
@@ -713,6 +706,8 @@ void ThreeWayQuickSort(size_t lower, size_t upper, Src& src,
 					   const FullComparer& full_cmper = FullComparer(),
 					   const Swapper& swapper = Swapper()) {
 	while (2 < upper - lower) {
+		swapper(src[lower], src[rand(lower + 1, upper - 1)]);
+
 		if (full_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
 		}
@@ -740,15 +735,8 @@ void ThreeWayQuickSort(size_t lower, size_t upper, Src& src,
 		}
 	}
 
-	switch (upper - lower) {
-		case 0: break;
-		case 1: break;
-		case 2:
-			if (full_cmper.lt(src[upper - 1], src[lower])) {
-				swapper(src[lower], src[upper - 1]);
-			}
-
-			break;
+	if ((upper - lower == 2) && full_cmper.lt(src[upper - 1], src[lower])) {
+		swapper(src[lower], src[upper - 1]);
 	}
 }
 
@@ -824,8 +812,8 @@ void HeapSort(size_t size, Src& src,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-#define PHI__intro_sort_depth_limit (32)
-#define PHI__heap_sort_threshold (4)
+#define PHI__intro_sort_depth_limit (64)
+#define PHI__heap_sort_threshold (8)
 
 template<typename Src, typename LessThanComparer, typename Swapper>
 void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
@@ -836,7 +824,7 @@ void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 	}
 
 	while (PHI__heap_sort_threshold < upper - lower) {
-		swapper(src[lower], src[random(lower + 2, upper - 1)]);
+		swapper(src[lower], src[rand(lower + 2, upper - 1)]);
 
 		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
@@ -898,7 +886,7 @@ void ThreeWayIntroSort_(size_t depth_limit, size_t lower, size_t upper,
 	}
 
 	while (PHI__heap_sort_threshold < upper - lower) {
-		swapper(src[lower], src[random(lower + 2, upper - 1)]);
+		swapper(src[lower], src[rand(lower + 2, upper - 1)]);
 
 		if (full_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
