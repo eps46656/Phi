@@ -9,15 +9,19 @@
 
 namespace phi {
 
-inline bool rand_init_() {
+inline bool random_init_() {
 	time_t t;
-	std::srand((unsigned int)time(&t));
+	srand48((unsigned int)time(&t));
 	return true;
 }
 
-inline int rand() {
-	static bool init(rand_init_());
-	return std::rand();
+inline unsigned long int random() {
+	static bool init(random_init_());
+	return lrand48();
+}
+
+inline unsigned int random(unsigned int lower, unsigned int upper) {
+	return rand() % (upper - lower) + lower;
 }
 
 template<typename Src, typename Swapper = DefaultSwapper>
@@ -26,8 +30,8 @@ void shuffle(Src& src, size_t size, size_t swap_times = 0,
 	if (swap_times == 0) { swap_times = size * 2; }
 
 	while (swap_times != 0) {
-		size_t a(rand() % size);
-		size_t b(rand() % size);
+		size_t a(random(0, size));
+		size_t b(random(0, size));
 		if (a == b) { continue; }
 		swapper(src[a], src[b]);
 		--swap_times;
