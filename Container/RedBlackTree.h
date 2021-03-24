@@ -40,7 +40,7 @@ public:
 
 	class Iterator {
 	public:
-		friend class RedBlackTree<T>;
+		friend class RedBlackTree;
 
 		Iterator(const Iterator& iter);
 
@@ -58,15 +58,15 @@ public:
 		Iterator& operator--();
 
 	private:
-		RedBlackTree<T>* rbt_;
+		RedBlackTree* rbt_;
 		Node* node_;
 
-		Iterator(RedBlackTree<T>* rbt, Node* node);
+		Iterator(RedBlackTree* rbt, Node* node);
 	};
 
 	class ConstIterator {
 	public:
-		friend class RedBlackTree<T>;
+		friend class RedBlackTree;
 
 		ConstIterator(const Iterator& iter);
 		ConstIterator(const ConstIterator& const_iter);
@@ -86,10 +86,10 @@ public:
 		ConstIterator& operator--();
 
 	private:
-		const RedBlackTree<T>* rbt_;
+		const RedBlackTree* rbt_;
 		const Node* node_;
 
-		ConstIterator(const RedBlackTree<T>* rbt, const Node* node);
+		ConstIterator(const RedBlackTree* rbt, const Node* node);
 	};
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -137,6 +137,10 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
+	template<typename Index> bool Contain(const Index& index) const;
+
+#///////////////////////////////////////////////////////////////////////////////
+
 	template<typename Index> Iterator Find(const Index& index);
 	template<typename Index> ConstIterator Find(const Index& index) const;
 
@@ -147,7 +151,7 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	Iterator Release(const Iterator& iter);
+	void Release(const Iterator& iter);
 
 	Iterator Erase(const Iterator& iter);
 	template<typename Index> bool FindErase(const Index& index);
@@ -243,13 +247,15 @@ const FullComparer& RedBlackTree<T, FullComparer>::full_comparer() {
 template<typename T, typename FullComparer>
 typename RedBlackTree<T, FullComparer>::Node*
 RedBlackTree<T, FullComparer>::first_node_() const {
-	return this->root_ == nullptr ? nullptr : this->root_->most_l();
+	return this->root_ == nullptr ? nullptr
+								  : static_cast<Node*>(this->root_->most_l());
 }
 
 template<typename T, typename FullComparer>
 typename RedBlackTree<T, FullComparer>::Node*
 RedBlackTree<T, FullComparer>::last_node_() const {
-	return this->root_ == nullptr ? nullptr : this->root_->most_r();
+	return this->root_ == nullptr ? nullptr
+								  : static_cast<Node*>(this->root_->most_r());
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -593,6 +599,14 @@ void RedBlackTree<T, FullComparer>::EnPool_(Node* n) {
 
 template<typename T, typename FullComparer>
 template<typename Index>
+bool RedBlackTree<T, FullComparer>::Contain(const Index& index) const {
+	return this->Find_(index) != nullptr;
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename T, typename FullComparer>
+template<typename Index>
 typename RedBlackTree<T, FullComparer>::Node*
 RedBlackTree<T, FullComparer>::Find_(const Index& index) const {
 	for (Node* node(this->root_); node != nullptr;) {
@@ -689,7 +703,7 @@ void RedBlackTree<T, FullComparer>::Release_(Node* node) {
 		this->root_ = nullptr;
 	} else {
 		if (this->root_ == node) {
-			if (!(this->root_ = static_cast<Node*>(node->l()))) {
+			if ((this->root_ = static_cast<Node*>(node->l())) == nullptr) {
 				this->root_ = static_cast<Node*>(node->r());
 			}
 		}
@@ -700,11 +714,9 @@ void RedBlackTree<T, FullComparer>::Release_(Node* node) {
 }
 
 template<typename T, typename FullComparer>
-typename RedBlackTree<T, FullComparer>::Iterator
-RedBlackTree<T, FullComparer>::Release(const Iterator& iter) {
+void RedBlackTree<T, FullComparer>::Release(const Iterator& iter) {
 	PHI__debug_if(this != iter.rbt_) { PHI__throw__local("iter error"); }
 	if (iter.node_ != nullptr) { this->Release_(iter.node_); }
-	iter.rbt_ = nullptr;
 }
 
 template<typename T, typename FullComparer>
@@ -746,7 +758,7 @@ RedBlackTree<T, FullComparer>::Iterator::Iterator(const Iterator& iter):
 	rbt_(iter.rbt_), node_(iter.node_) {}
 
 template<typename T, typename FullComparer>
-RedBlackTree<T, FullComparer>::Iterator::Iterator(RedBlackTree<T>* rbt,
+RedBlackTree<T, FullComparer>::Iterator::Iterator(RedBlackTree* rbt,
 												  Node* node):
 	rbt_(rbt),
 	node_(node) {}
@@ -841,7 +853,7 @@ RedBlackTree<T, FullComparer>::ConstIterator::ConstIterator(
 
 template<typename T, typename FullComparer>
 RedBlackTree<T, FullComparer>::ConstIterator::ConstIterator(
-	const RedBlackTree<T>* rbt, const Node* node):
+	const RedBlackTree* rbt, const Node* node):
 	rbt_(rbt),
 	node_(node) {}
 

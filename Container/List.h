@@ -237,7 +237,7 @@ template<typename T> List<T>::List(const List<T>& list): size_(list.size_) {
 template<typename T> List<T>::List(List<T>&& list): size_(list.size_) {
 	list.size_ = 0;
 	Node::Swap(this->node_, list.node_);
-	this->pool_.PushPrevAllExcept(&list.pool_);
+	list.pool_.TransferTo(this->pool_);
 }
 
 template<typename T> List<T>::~List() {

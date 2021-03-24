@@ -351,7 +351,7 @@ void RedBlackTreeNode::Release() {
 	RedBlackTreeNode* m;
 
 	if (n->l_ != nullptr && n->r_ != nullptr) {
-		m = m->l_->most_r();
+		m = n->l_->most_r();
 
 		Swap(n, m);
 
