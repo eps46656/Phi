@@ -102,8 +102,7 @@ public:
 	size_t size() const;
 	bool empty() const;
 
-	FullComparer& full_comparer();
-	const FullComparer& full_comparer() const;
+	const FullComparer& full_comparer();
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -121,7 +120,7 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	RedBlackTree(FullComparer full_cmper = FullComparer());
+	RedBlackTree(const FullComparer& full_cmper = FullComparer());
 	RedBlackTree(const RedBlackTree& rbt);
 	RedBlackTree(RedBlackTree&& rbt);
 
@@ -151,7 +150,7 @@ public:
 	Iterator Release(const Iterator& iter);
 
 	Iterator Erase(const Iterator& iter);
-	template<typename Index> void FindErase(const Index& index);
+	template<typename Index> bool FindErase(const Index& index);
 
 	void Clear();
 
@@ -235,12 +234,7 @@ bool RedBlackTree<T, FullComparer>::empty() const {
 }
 
 template<typename T, typename FullComparer>
-FullComparer& RedBlackTree<T, FullComparer>::full_comparer() {
-	return this->full_cmper_;
-}
-
-template<typename T, typename FullComparer>
-const FullComparer& RedBlackTree<T, FullComparer>::full_comparer() const {
+const FullComparer& RedBlackTree<T, FullComparer>::full_comparer() {
 	return this->full_cmper_;
 }
 
@@ -317,7 +311,7 @@ RedBlackTree<T, FullComparer>::null_const_iterator() {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T, typename FullComparer>
-RedBlackTree<T, FullComparer>::RedBlackTree(FullComparer full_cmper):
+RedBlackTree<T, FullComparer>::RedBlackTree(const FullComparer& full_cmper):
 	size_(0), full_cmper_(full_cmper), root_(nullptr) {}
 
 template<typename T, typename FullComparer>
@@ -710,6 +704,7 @@ typename RedBlackTree<T, FullComparer>::Iterator
 RedBlackTree<T, FullComparer>::Release(const Iterator& iter) {
 	PHI__debug_if(this != iter.rbt_) { PHI__throw__local("iter error"); }
 	if (iter.node_ != nullptr) { this->Release_(iter.node_); }
+	iter.rbt_ = nullptr;
 }
 
 template<typename T, typename FullComparer>
@@ -726,11 +721,12 @@ RedBlackTree<T, FullComparer>::Erase(const Iterator& iter) {
 
 template<typename T, typename FullComparer>
 template<typename Index>
-void RedBlackTree<T, FullComparer>::FindErase(const Index& index) {
+bool RedBlackTree<T, FullComparer>::FindErase(const Index& index) {
 	Node* node(this->Find_(index));
-	if (node == nullptr) { return; }
+	if (node == nullptr) { return false; }
 	this->Release_(node);
 	this->pool_.Push(node);
+	return true;
 }
 
 template<typename T, typename FullComparer>

@@ -486,40 +486,12 @@ template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 void BubbleSort(size_t lower, size_t upper, Src& src,
 				const LessThanComparer& lt_cmper = LessThanComparer(),
 				const Swapper& swapper = Swapper()) {
-	size_t first_swap(lower);
-
-	while (1 < upper - lower) {
-		size_t last_swap(lower);
-
-		/*
-		size_t i(first_swap == lower ? lower : first_swap - 1);
-
-		for (; i != upper - 1; ++i) {
-			if (lt_cmper.lt(src[i + 1], src[i])) {
-				swapper(src[i], src[i + 1]);
-				first_swap = i;
-				last_swap = i + 1;
-				++i;
-				break;
-			}
-		}
-
-		for (; i != upper - 1; ++i) {
-			if (lt_cmper.lt(src[i + 1], src[i])) {
-				swapper(src[i], src[i + 1]);
-				last_swap = i + 1;
-			}
-		}
-		*/
-
+	for (; 1 < upper - lower; --upper) {
 		for (size_t i(lower); i != upper - 1; ++i) {
 			if (lt_cmper.lt(src[i + 1], src[i])) {
 				swapper(src[i], src[i + 1]);
-				last_swap = i + 1;
 			}
 		}
-
-		upper = last_swap;
 	}
 }
 
@@ -541,7 +513,6 @@ Bubble sorts [begin, end). Uses lt_cmper to compare two elements.
 Uses swapper to swap elemenets.
 */
 
-/*
 template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
@@ -566,8 +537,8 @@ void BubbleSort(ForwardIterator begin, ForwardIterator end,
 		++next_i;
 	}
 }
-*/
 
+/*
 template<typename Bidirectioanl,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
@@ -597,6 +568,7 @@ void BubbleSort(Bidirectioanl begin, Bidirectioanl end,
 		end = last_swap;
 	} while (begin != end);
 }
+*/
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -656,7 +628,9 @@ void TwoWayQuickSort(size_t lower, size_t upper, Src& src,
 					 const LessThanComparer& lt_cmper = LessThanComparer(),
 					 const Swapper& swapper = Swapper()) {
 	while (2 < upper - lower) {
-		swapper(src[lower], src[rand(lower + 1, upper - 1)]);
+		if (3 < upper - lower) {
+			swapper(src[lower], src[(lower + upper) / 2]);
+		}
 
 		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
@@ -706,7 +680,9 @@ void ThreeWayQuickSort(size_t lower, size_t upper, Src& src,
 					   const FullComparer& full_cmper = FullComparer(),
 					   const Swapper& swapper = Swapper()) {
 	while (2 < upper - lower) {
-		swapper(src[lower], src[rand(lower + 1, upper - 1)]);
+		if (3 < upper - lower) {
+			swapper(src[lower], src[(lower + upper) / 2]);
+		}
 
 		if (full_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
@@ -753,31 +729,23 @@ void ThreeWayQuickSort(size_t size, Src& src,
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-void Heapify(size_t lower, size_t upper, size_t i, Src& src,
+		 typename T, typename Swapper = DefaultSwapper>
+void Heapify(size_t lower, size_t upper, size_t i, Src& src, T& value,
 			 const LessThanComparer& lt_cmper = LessThanComparer(),
 			 const Swapper& swapper = Swapper()) {
 	for (;;) {
-		size_t l(lower + (i - lower) * 2 + 1);
-		size_t r(l + 1);
-		size_t largest(i);
+		size_t c(lower + (i - lower) * 2 + 1);
 
-		if (l < upper && lt_cmper.lt(src[largest], src[l])) { largest = l; }
-		if (r < upper && lt_cmper.lt(src[largest], src[r])) { largest = r; }
+		if (upper <= c) { break; }
+		if (c + 1 < upper && lt_cmper.lt(src[c], src[c + 1])) { ++c; }
 
-		if (largest == i) { break; }
+		if (!lt_cmper.lt(value, src[c])) { break; }
 
-		swapper(src[i], src[largest]);
-		i = largest;
+		src[i] = Move(src[c]);
+		i = c;
 	}
-}
 
-template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-void Heapify(size_t size, size_t i, Src& src,
-			 const LessThanComparer& lt_cmper = LessThanComparer(),
-			 const Swapper& swapper = Swapper()) {
-	Heapify(0, size, i, src, lt_cmper, swapper);
+	src[i] = Move(value);
 }
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
@@ -791,12 +759,23 @@ void HeapSort(size_t lower, size_t upper, Src& src,
 
 	for (size_t i(size / 2); i != 0;) {
 		--i;
-		Heapify(lower, upper, lower + i, src, lt_cmper, swapper);
+
+		size_t p(lower + i);
+		size_t c(lower + i * 2 + 1);
+
+		if (c + 1 < upper && lt_cmper.lt(src[c], src[c + 1])) { ++c; }
+		if (!lt_cmper.lt(src[p], src[c])) { continue; }
+
+		auto temp(Move(src[p]));
+		src[p] = Move(src[c]);
+
+		Heapify(lower, upper, c, src, temp, lt_cmper, swapper);
 	}
 
-	while (1 < upper - lower) {
-		swapper(src[lower], src[--upper]);
-		Heapify(lower, upper, lower, src, lt_cmper, swapper);
+	for (; 1 < upper - lower; --upper) {
+		auto temp(Move(src[lower]));
+		Heapify(lower, upper, lower, src, src[upper - 1], lt_cmper, swapper);
+		src[upper - 1] = Move(temp);
 	}
 }
 
@@ -812,19 +791,20 @@ void HeapSort(size_t size, Src& src,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-#define PHI__intro_sort_depth_limit (64)
-#define PHI__heap_sort_threshold (8)
+#define PHI__intro_sort_depth_limit (32)
+#define PHI__heap_sort_threshold (32)
 
 template<typename Src, typename LessThanComparer, typename Swapper>
 void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 					  const LessThanComparer& lt_cmper,
 					  const Swapper& swapper) {
 	if ((depth_limit == 0) | (upper - lower) < PHI__heap_sort_threshold) {
-		HeapSort(lower, upper, src, lt_cmper, swapper);
+		HeapSort(lower, upper, src, lt_cmper);
+		return;
 	}
 
 	while (PHI__heap_sort_threshold < upper - lower) {
-		swapper(src[lower], src[rand(lower + 2, upper - 1)]);
+		swapper(src[lower], src[(lower + upper) / 2]);
 
 		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
@@ -842,7 +822,7 @@ void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 		swapper(src[lower], src[--p]);
 
 		bool a_size(p - lower);
-		bool b_size(upper - p);
+		bool b_size(upper - p - 1);
 
 		if (a_size < b_size) {
 			TwoWayIntroSort_(depth_limit - 1, lower, p, src, lt_cmper, swapper);
@@ -854,7 +834,7 @@ void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 		}
 	}
 
-	HeapSort(lower, upper, src, lt_cmper, swapper);
+	HeapSort(lower, upper, src, lt_cmper);
 }
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
@@ -883,10 +863,11 @@ void ThreeWayIntroSort_(size_t depth_limit, size_t lower, size_t upper,
 						const Swapper& swapper) {
 	if ((depth_limit == 0) || (upper - lower < PHI__heap_sort_threshold)) {
 		HeapSort(lower, upper, src, full_cmper, swapper);
+		return;
 	}
 
 	while (PHI__heap_sort_threshold < upper - lower) {
-		swapper(src[lower], src[rand(lower + 2, upper - 1)]);
+		swapper(src[lower], src[(lower + upper) / 2]);
 
 		if (full_cmper.lt(src[upper - 1], src[lower + 1])) {
 			swapper(src[lower + 1], src[upper - 1]);
@@ -938,6 +919,7 @@ void ThreeWayIntroSort(size_t size, Src& src,
 }
 
 #undef PHI__intro_sort_depth_limit
+#undef PHI__heap_sort_threshold
 
 }
 
