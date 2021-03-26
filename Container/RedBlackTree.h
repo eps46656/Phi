@@ -17,9 +17,9 @@ template<typename T, typename FullComparer = DefaultFullComparer>
 class RedBlackTree {
 public:
 	struct Node: private RedBlackTreeNode {
-	public:
-		friend class RedBlackTree<T, FullComparer>;
+		friend class RedBlackTree;
 
+	public:
 		T value;
 
 		template<typename... Args> Node(Args&&... args);
@@ -39,9 +39,9 @@ public:
 	class ConstIterator;
 
 	class Iterator {
-	public:
 		friend class RedBlackTree;
 
+	public:
 		Iterator(const Iterator& iter);
 
 		Iterator& operator=(const Iterator& iter);
@@ -65,9 +65,9 @@ public:
 	};
 
 	class ConstIterator {
-	public:
 		friend class RedBlackTree;
 
+	public:
 		ConstIterator(const Iterator& iter);
 		ConstIterator(const ConstIterator& const_iter);
 
@@ -677,10 +677,7 @@ insert_complete:;
 template<typename T, typename FullComparer>
 pair<typename RedBlackTree<T, FullComparer>::Node*, bool>
 RedBlackTree<T, FullComparer>::InsertNode(Node* node) {
-	PHI__debug_if(node->p() || node->l() || node->r()) {
-		PHI__throw__local("node error");
-	}
-
+	PHI__debug_if(!node->sole()) { PHI__throw__local("node is not sole"); }
 	return pair<Node*, bool>(node, this->Insert_(node));
 }
 
@@ -703,8 +700,10 @@ void RedBlackTree<T, FullComparer>::Release_(Node* node) {
 		this->root_ = nullptr;
 	} else {
 		if (this->root_ == node) {
-			if ((this->root_ = static_cast<Node*>(node->l())) == nullptr) {
-				this->root_ = static_cast<Node*>(node->r());
+			if (this->root_->l() != nullptr) {
+				this->root_ = static_cast<Node*>(this->root_->l());
+			} else {
+				this->root_ = static_cast<Node*>(this->root_->r());
 			}
 		}
 
@@ -818,8 +817,9 @@ typename RedBlackTree<T, FullComparer>::Iterator&
 RedBlackTree<T, FullComparer>::Iterator::operator++() {
 	PHI__debug_if(this->rbt_ == nullptr) { PHI__throw__local("iter error"); }
 
-	this->node_ = this->node_ == nullptr ? this->rbt_->first_node_()
-										 : this->node_->next();
+	this->node_ = this->node_ == nullptr
+					  ? this->rbt_->first_node_()
+					  : static_cast<Node*>(this->node_->next());
 
 	return *this;
 }
@@ -829,8 +829,9 @@ typename RedBlackTree<T, FullComparer>::Iterator&
 RedBlackTree<T, FullComparer>::Iterator::operator--() {
 	PHI__debug_if(this->rbt_ == nullptr) { PHI__throw__local("iter error"); }
 
-	this->node_ =
-		this->node_ == nullptr ? this->rbt_->last_node_() : this->node_->prev();
+	this->node_ = this->node_ == nullptr
+					  ? this->rbt_->last_node_()
+					  : static_cast<Node*>(this->node_->prev());
 
 	return *this;
 }
@@ -923,8 +924,9 @@ typename RedBlackTree<T, FullComparer>::ConstIterator&
 RedBlackTree<T, FullComparer>::ConstIterator::operator++() {
 	PHI__debug_if(this->rbt_ == nullptr) { PHI__throw__local("iter error"); }
 
-	this->node_ = this->node_ == nullptr ? this->rbt_->first_node_()
-										 : this->node_->prev();
+	this->node_ = this->node_ == nullptr
+					  ? this->rbt_->first_node_()
+					  : static_cast<Node*>(this->node_->prev());
 
 	return *this;
 }
@@ -934,8 +936,9 @@ typename RedBlackTree<T, FullComparer>::ConstIterator&
 RedBlackTree<T, FullComparer>::ConstIterator::operator--() {
 	PHI__debug_if(this->rbt_ == nullptr) { PHI__throw__local("iter error"); }
 
-	this->node_ =
-		this->node_ == nullptr ? this->rbt_->last_node_() : this->node_->prev();
+	this->node_ = this->node_ == nullptr
+					  ? this->rbt_->last_node_()
+					  : static_cast<Node*>(this->node_->prev());
 
 	return *this;
 }

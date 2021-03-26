@@ -1,36 +1,36 @@
 #ifndef PHI__define_guard__graf_search_h
 #define PHI__define_guard__graf_search_h
 
-#include "pair.h"
-#include "../Container/Vector.h"
 #include "../Container/List.h"
 #include "../Container/RedBlackTree.h"
 
 namespace phi {
 
+// unfinished
+#if false
 namespace a_star_search_utility {
 
-template<typename Node> struct PathNode {
+/*template<typename Node> struct PathNode {
 	Node* node;
 	PathNode* parent;
 	size_t dist_to_parent;
 	size_t g_score;
 	size_t h_score;
-};
+};*/
 
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
 
 template<typename Node, typename NodeComparer, typename Heuristic>
 struct SetComparer {
 	const NodeComparer& node_cmper;
 
-#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
 
 	SetComparer(const NodeComparer& node_cmper): node_cmper(node_cmper) {}
 
-#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
 
 	int operator()(const PathNode<Node>* x, const PathNode<Node>* y) const {
 		size_t x_f_score(x->g_score + x->h_score);
@@ -48,7 +48,7 @@ struct SetComparer {
 		return this->node_cmper(node, path_node->node);
 	}
 
-#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
 
 	template<typename X, typename Y> bool eq(X&& x, Y&& y) const {
 		return this->operator()(x, y) == 0;
@@ -75,9 +75,9 @@ struct SetComparer {
 	}
 };
 
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
 
 template<typename Node, typename NodeComparer, typename Heuristic>
 class Set:
@@ -95,6 +95,20 @@ public:
 	}
 };
 
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+	#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Node> struct PathNode {
+	Node* node;
+	PathNode* parent;
+	size_t dist_to_parent;
+	size_t g_score;
+	size_t h_score;
+
+	cntr::RedBlackTree<>
+};
+
 }
 
 template<typename Node, typename NodeComparer, typename NextNodeGenerator,
@@ -108,20 +122,21 @@ cntr::List<Node*> AStartSearch(Node* begin, Node* end,
 		a_star_search_utility::SetComparer<Node, NodeComparer, Heuristic>;
 	using Set = a_star_search_utility::Set<Node, NodeComparer, Heuristic>;
 
-	SetComparer set_cmper(node_cmper);
-
 	cntr::List<Node*> path;
-	cntr::List<pair<Node*, size_t>> next_nodes;
 
-	Set open_set(set_cmper);
-	Set close_set(set_cmper);
-
-	if (begin == end) {
+	if (node_cmper(begin, end) == 0) {
 		path.PushBack(begin);
 		return path;
 	}
 
-	PathNode* begin_path_node = New<PathNode>();
+	cntr::List<pair<Node*, size_t>> next_nodes;
+
+	SetComparer set_cmper(node_cmper);
+	Set close_set(set_cmper);
+	Set open_set(set_cmper);
+	cntr::RedBlackTree<Node*> open_set_;
+
+	PathNode* begin_path_node(New<PathNode>());
 	begin_path_node->node = begin;
 	begin_path_node->parent = nullptr;
 	begin_path_node->dist_to_parent = 0;
@@ -129,10 +144,15 @@ cntr::List<Node*> AStartSearch(Node* begin, Node* end,
 	begin_path_node->h_score = heuristic(begin, end);
 
 	open_set.Insert(begin_path_node);
+	open_set_.Insert(begin);
 
 	while (!open_set.empty()) {
 		PathNode* path_node(open_set.Pop());
+		open_set_.FindErase(path_node->node);
 		close_set.Insert(path_node);
+
+		std::cout << "path_node ( " << path_node->node->x << ", "
+				  << path_node->node->y << " )\n";
 
 		next_node_generator(next_nodes, path_node->node);
 
@@ -156,13 +176,17 @@ cntr::List<Node*> AStartSearch(Node* begin, Node* end,
 				goto search_end;
 			}
 
-			if (close_set.Contain(next_node)) { continue; }
+			if (node_cmper(path_node->node, next_node) == 0) {
+				Delete(next_node);
+				continue;
+			}
 
 			size_t g_score(path_node->g_score + next_node_dist);
 			auto prev(open_set.Find(next_node));
 
 			if (prev != open_set.null_iterator()) {
 				if ((*prev)->g_score <= g_score) {
+					Delete(next_node);
 					continue; // next next_node;
 				}
 
@@ -182,6 +206,9 @@ cntr::List<Node*> AStartSearch(Node* begin, Node* end,
 
 search_end:;
 
+	std::cout << "close_set.size() " << close_set.size() << "\n";
+	std::cout << "open_set.size() " << open_set.size() << "\n";
+
 	while (!close_set.empty()) {
 		PathNode* path_node(close_set.Pop());
 		Delete(path_node->node);
@@ -195,52 +222,7 @@ search_end:;
 	return path;
 }
 
-/*
-template<typename Node, typename AdjNodeGenerator, typename Heuristic>
-cntr::List<Node> AStartSearch(Node begin, Node end,
-							  const AdjNodeGenerator& adj_node_generator,
-							  const Heuristic& heuristic) {
-	using PathNode = a_star_search_utility::PathNode<Node>;
-
-	cntr::List<Node> route;
-	route.PushBack(begin);
-
-	cntr::List<PathNode*> all_path_node;
-	cntr::RedBlackTree<PathNode*> open_set;
-	cntr::RedBlackTree<PathNode*> close_set;
-
-	while (!open_set.empty()) {
-		PathNode* path_node(open_set.Pop());
-
-		cntr::Vector<pair<Node, size_t>> adjs(
-			adj_node_generator(path_node->node));
-
-		for (size_t i(0); i != adjs.size(); ++i) {
-			Node& adj_node(adjs[i].first);
-			size_t parent_length(adjs[i].second);
-			size_t acc_length(path_node.acc_length + parent_length);
-
-			{
-				auto iter(open_set.find(adj_node));
-
-				if (iter != open_set.end()) {
-					if (acc_length <= (*iter)->acc_length) {}
-				}
-			}
-
-			if () {
-			} else if (close_set.Contains(adj_node)) {
-			}
-		}
-
-		PathNode path_node =
-			New<PathNode>(node, node_generator(*node), heuristic(*node),
-
-			);
-
-		all_path_node.Push(path_node);
-	}
-}*/
+#endif
 }
 
 #endif
