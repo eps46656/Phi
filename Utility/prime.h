@@ -54,7 +54,7 @@ public:
 private:
 	struct Block {
 		int index;
-		prime_t Utility;
+		prime_t utility;
 		Block* child[PHI__prime_t_bit_num];
 		char value[BlockSize / 8];
 
@@ -298,18 +298,18 @@ bool PrimeTable::IsPrime(prime_t num) {
 #///////////////////////////////////////////////////////////////////////////////
 
 PrimeTable::Block::Block(prime_t index):
-	index(index), Utility(GetUtility(index)) {
+	index(index), utility(GetUtility(index)) {
 	for (int i(0); i != PHI__prime_t_bit_num; ++i) { this->child[i] = nullptr; }
 }
 
 pair<bool, prime_t> PrimeTable::Block::GetWithIndex(int index) {
 	int i(index / 8);
 	return pair<bool, prime_t>(this->value[i] & (char(1) << (index - i * 8)),
-							   this->Utility + 2 * index);
+							   this->utility + 2 * index);
 }
 
 bool PrimeTable::Block::GetWithNum(prime_t num) {
-	int index((num - this->Utility) / 2);
+	int index((num - this->utility) / 2);
 	int i(index / 8);
 	return this->value[i] & (char(1) << (index - i * 8));
 }
@@ -318,7 +318,7 @@ void PrimeTable::Block::Print() const {
 	for (int i(0); i != BlockSize / 8; ++i) {
 		for (int j(0); j != 8; ++j) {
 			if (this->value[i] & (char(1) << j)) {
-				std::cout << this->Utility + (i * 8 + j) * 2 << ", ";
+				std::cout << this->utility + (i * 8 + j) * 2 << ", ";
 			}
 		}
 	}

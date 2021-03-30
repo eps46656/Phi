@@ -286,7 +286,7 @@ void Assign2D(Dst&& dst, Args&&... args) {
 
 template<typename Src, typename Swapper = DefaultSwapper>
 void Reverse(size_t lower, size_t upper, Src& src,
-			 Swapper swapper = Swapper()) {
+			 const Swapper& swapper = Swapper()) {
 	size_t size(upper - lower);
 
 	for (size_t i(0); i != size / 2; ++i) {
@@ -295,7 +295,7 @@ void Reverse(size_t lower, size_t upper, Src& src,
 }
 
 template<typename Src, typename Swapper = DefaultSwapper>
-void Reverse(size_t size, Src& src, Swapper swapper = Swapper()) {
+void Reverse(size_t size, Src& src, const Swapper& swapper = Swapper()) {
 	Reverse(0, size, src, swapper);
 }
 
@@ -306,8 +306,8 @@ void Reverse(size_t size, Src& src, Swapper swapper = Swapper()) {
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 bool next_permutation(size_t size, Src& src,
-					  LessThanComparer lt_cmper = LessThanComparer(),
-					  Swapper swapper = Swapper()) {
+					  const LessThanComparer& lt_cmper = LessThanComparer(),
+					  const Swapper& swapper = Swapper()) {
 	if (size <= 1) { return false; }
 
 	size_t i(size - 1);
@@ -331,8 +331,8 @@ template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 bool next_permutation(BidirectionalIterator begin, BidirectionalIterator end,
-					  LessThanComparer lt_cmper = LessThanComparer(),
-					  Swapper swapper = Swapper()) {
+					  const LessThanComparer& lt_cmper = LessThanComparer(),
+					  const Swapper& swapper = Swapper()) {
 	if (begin == end) { return false; }
 	BidirectionalIterator last(end);
 	--last;
@@ -368,23 +368,13 @@ template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 bool prev_permutation(BidirectionalIterator begin, BidirectionalIterator end,
-					  LessThanComparer lt_cmper = LessThanComparer(),
-					  Swapper swapper = Swapper()) {
+					  const LessThanComparer& lt_cmper = LessThanComparer(),
+					  const Swapper& swapper = Swapper()) {
 	return next_permutation(
 		begin, end, ReverseBoolReturnedFunctor<LessThanComparer>(lt_cmper),
 		swapper);
 }
 
-/*
-
-0 1 2 3
-0 1 2 3
-0 1 2 4
-0 1 2 4 5 3
-0 1 2 5 3 4
-0 1 2 5 4 3
-
-*/
 }
 
 #endif

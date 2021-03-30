@@ -15,7 +15,7 @@ template<typename T, size_t N> struct Array {
 
 	template<typename... Args> static Array Make(Args&&... args) {
 		Array r;
-		PHI::Assign<N>(r, Forward<Args>(args)...);
+		phi::Assign<N>(r, Forward<Args>(args)...);
 		return r;
 	}
 
@@ -38,22 +38,13 @@ template<typename T, size_t N> struct Array {
 	}
 
 	template<typename... Args> void Assign(Args&&... args) {
-		PHI::Assign<N>(this->value, Forward<Args>(args)...);
+		phi::Assign<N>(this->value, Forward<Args>(args)...);
 	}
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	template<typename Index> T& operator[](Index&& index) & {
-		return this->value[Forward<Index>(index)];
-	}
-
-	template<typename Index> const T& operator[](Index&& index) const& {
-		return this->value[Forward<Index>(index)];
-	}
-
-	template<typename Index> T&& operator[](Index&& index) && {
-		return Move(this->value[Forward<Index>(index)]);
-	}
+	T& operator[](size_t index) { return this->value[index]; }
+	const T& operator[](size index) const { return this->value[index]; }
 };
 
 }

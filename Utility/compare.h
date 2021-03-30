@@ -195,85 +195,87 @@ function.
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename LessThanComparer>
-struct ConstructFullComparerWithLessThanComparer {
-	const LessThanComparer& lt_cmper;
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
 
+template<typename UnImplementedFullComparer>
+struct AutoImplementFullComparer: public UnImplementedFullComparer {
 	template<typename... Args>
-	ConstructFullComparerWithLessThanComparer(Args&&... args):
-		lt_cmper(std::forward<Args>(args)...) {}
+	AutoImplementFullComparer(Args&&... args):
+		UnImplementedFullComparer(Forward<Args>(args)...) {}
+
+	template<typename X, typename Y> bool eq(X& x, Y& y) const {
+		return this->operator()(x, y) == 0;
+	}
+
+	template<typename X, typename Y> bool ne(X& x, Y& y) const {
+		return this->operator()(x, y) != 0;
+	}
+
+	template<typename X, typename Y> bool lt(X& x, Y& y) const {
+		return this->operator()(x, y) == -1;
+	}
+
+	template<typename X, typename Y> bool gt(X& x, Y& y) const {
+		return this->operator()(x, y) == 1;
+	}
+
+	template<typename X, typename Y> bool le(X& x, Y& y) const {
+		return this->operator()(x, y) != 1;
+	}
+
+	template<typename X, typename Y> bool ge(X& x, Y& y) const {
+		return this->operator()(x, y) != -1;
+	}
+};
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename LessThanComparer>
+struct ConstructFullComparerWithLessThanComparer_ {
+	LessThanComparer lt_cmper;
+
+	template<typename... LessThanComparerConstructArgs>
+	ConstructFullComparerWithLessThanComparer_(
+		LessThanComparerConstructArgs&&... lt_cmper_construct_args):
+		lt_cmper(Forward<LessThanComparerConstructArgs>(
+			lt_cmper_construct_args)...) {}
 
 	template<typename X, typename Y> int operator()(X& x, Y& y) const {
 		if (this->lt_cmper(x, y)) { return -1; }
 		if (this->lt_cmper(y, x)) { return 1; }
 		return 0;
 	}
-
-	template<typename X, typename Y> bool eq(X& x, Y& y) const {
-		return this->operator()(x, y) == 0;
-	}
-
-	template<typename X, typename Y> bool ne(X& x, Y& y) const {
-		return this->operator()(x, y) != 0;
-	}
-
-	template<typename X, typename Y> bool lt(X& x, Y& y) const {
-		return this->operator()(x, y) == -1;
-	}
-
-	template<typename X, typename Y> bool gt(X& x, Y& y) const {
-		return this->operator()(x, y) == 1;
-	}
-
-	template<typename X, typename Y> bool le(X& x, Y& y) const {
-		return this->operator()(x, y) != 1;
-	}
-
-	template<typename X, typename Y> bool ge(X& x, Y& y) const {
-		return this->operator()(x, y) != -1;
-	}
 };
+
+template<typename LessThanComparer>
+using ConstructFullComparerWithLessThanComparer = AutoImplementFullComparer<
+	ConstructFullComparerWithLessThanComparer_<LessThanComparer>>;
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename FullComparerFunctionPtr>
-struct ConstructFullComparerWithFullComparerFunctionPtr {
+struct ConstructFullComparerWithFullComparerFunctionPtr_ {
 	FullComparerFunctionPtr full_cmper_func_ptr;
 
-	ConstructFullComparerWithFullComparerFunctionPtr(
+	ConstructFullComparerWithFullComparerFunctionPtr_(
 		FullComparerFunctionPtr full_cmper_func_ptr):
 		full_cmper_func_ptr(full_cmper_func_ptr) {}
 
 	template<typename X, typename Y> int operator()(X& x, Y& y) const {
 		return this->full_cmper_func_ptr(x, y);
 	}
-
-	template<typename X, typename Y> bool eq(X& x, Y& y) const {
-		return this->operator()(x, y) == 0;
-	}
-
-	template<typename X, typename Y> bool ne(X& x, Y& y) const {
-		return this->operator()(x, y) != 0;
-	}
-
-	template<typename X, typename Y> bool lt(X& x, Y& y) const {
-		return this->operator()(x, y) == -1;
-	}
-
-	template<typename X, typename Y> bool gt(X& x, Y& y) const {
-		return this->operator()(x, y) == 1;
-	}
-
-	template<typename X, typename Y> bool le(X& x, Y& y) const {
-		return this->operator()(x, y) != 1;
-	}
-
-	template<typename X, typename Y> bool ge(X& x, Y& y) const {
-		return this->operator()(x, y) != -1;
-	}
 };
+
+template<typename FullComparerFunctionPtr>
+using ConstructFullComparerWithFullComparerFunctionPtr =
+	AutoImplementFullComparer<ConstructFullComparerWithFullComparerFunctionPtr_<
+		FullComparerFunctionPtr>>;
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -373,33 +375,24 @@ struct DefaultFullComparer {
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename FullComparer> struct ReverseFullComparer {
-	const FullComparer& full_cmper;
+template<typename FullComparer> struct ReverseFullComparer_ {
+	FullComparer full_cmper;
 
-	template<typename... Args>
-	ReverseFullComparer(Args&&... args): full_cmper(Forward<Args>(args)...) {}
+	template<typename... FullComparerConstructArgs>
+	ReverseFullComparer_(
+		FullComparerConstructArgs&&... full_cmper_construct_args):
+		full_cmper(
+			Forward<FullComparerConstructArgs>(full_cmper_construct_args)...) {}
 
 	template<typename X, typename Y>
 	int operator()(const X& x, const Y& y) const {
 		return -this->full_cmper(x, y);
 	}
-
-	template<typename X, typename Y> bool lt(X& x, Y& y) const {
-		return this->operator()(x, y) == -1;
-	}
-
-	template<typename X, typename Y> bool gt(X& x, Y& y) const {
-		return this->operator()(x, y) == 1;
-	}
-
-	template<typename X, typename Y> bool le(X& x, Y& y) const {
-		return this->operator()(x, y) != 1;
-	}
-
-	template<typename X, typename Y> bool ge(X& x, Y& y) const {
-		return this->operator()(x, y) != -1;
-	}
 };
+
+template<typename FullComparer>
+using ReverseFullComparer =
+	AutoImplementFullComparer<ReverseFullComparer_<FullComparer>>;
 
 }
 

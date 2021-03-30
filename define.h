@@ -34,7 +34,9 @@
 #define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
 #define PHI__throw(type, func, desc) PHI__throw_(type, func, desc)
 
-#define PHI__offset(type, member) size_t(&((type*)0)->member)
+#define PHI__offset(type, member) (size_t(&((type*)(0))->member))
+#define PHI__get_type_with_member(type, member_name, member)                   \
+	((type*)(size_t(member) - PHI__offset(type, member_name)))
 
 #define PHI__eps (1e-8)
 #define PHI__inf (1e256 * 1e256 * 1e256 * 1e256)

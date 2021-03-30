@@ -7,8 +7,8 @@
 #define PHI__throw__local(desc)                                                \
 	PHI__throw(cntr::RedBlackTreeNode, __func__, desc);
 
-#define PHI__rbt_ptr(x) static_cast<RedBlackTreeNode*>(x)
-#define PHI__const_rbt_ptr(x) static_cast<const RedBlackTreeNode*>(x)
+#define PHI__rbtn_ptr(x) static_cast<RedBlackTreeNode*>(x)
+#define PHI__const_rbtn_ptr(x) static_cast<const RedBlackTreeNode*>(x)
 
 namespace phi {
 namespace cntr {
@@ -53,12 +53,9 @@ struct RedBlackTreeNode: public TreeNode {
 
 	inline void InsertL(RedBlackTreeNode* n);
 	inline void InsertR(RedBlackTreeNode* n);
-	inline void InsertFix();
-
-#///////////////////////////////////////////////////////////////////////////////
 
 	inline void Release();
-	inline void ReleaseFix();
+	inline void ReleaseAll();
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -66,6 +63,10 @@ struct RedBlackTreeNode: public TreeNode {
 
 protected:
 	bool color_;
+
+	inline void InsertFix_();
+	inline void ReleaseFix_();
+	inline static void ReleaseAll_(RedBlackTreeNode* n);
 };
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -75,35 +76,41 @@ protected:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-RedBlackTreeNode* RedBlackTreeNode::p() const { return PHI__rbt_ptr(this->p_); }
-RedBlackTreeNode* RedBlackTreeNode::l() const { return PHI__rbt_ptr(this->l_); }
-RedBlackTreeNode* RedBlackTreeNode::r() const { return PHI__rbt_ptr(this->r_); }
+RedBlackTreeNode* RedBlackTreeNode::p() const {
+	return PHI__rbtn_ptr(this->p_);
+}
+RedBlackTreeNode* RedBlackTreeNode::l() const {
+	return PHI__rbtn_ptr(this->l_);
+}
+RedBlackTreeNode* RedBlackTreeNode::r() const {
+	return PHI__rbtn_ptr(this->r_);
+}
 bool RedBlackTreeNode::color() const { return this->color_; }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 RedBlackTreeNode* RedBlackTreeNode::most_p() {
-	return PHI__rbt_ptr(this->TreeNode::most_p());
+	return PHI__rbtn_ptr(this->TreeNode::most_p());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::most_p() const {
-	return PHI__const_rbt_ptr(this->TreeNode::most_p());
+	return PHI__const_rbtn_ptr(this->TreeNode::most_p());
 }
 
 RedBlackTreeNode* RedBlackTreeNode::most_l() {
-	return PHI__rbt_ptr(this->TreeNode::most_l());
+	return PHI__rbtn_ptr(this->TreeNode::most_l());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::most_l() const {
-	return PHI__const_rbt_ptr(this->TreeNode::most_l());
+	return PHI__const_rbtn_ptr(this->TreeNode::most_l());
 }
 
 RedBlackTreeNode* RedBlackTreeNode::most_r() {
-	return PHI__rbt_ptr(this->TreeNode::most_r());
+	return PHI__rbtn_ptr(this->TreeNode::most_r());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::most_r() const {
-	return PHI__const_rbt_ptr(this->TreeNode::most_r());
+	return PHI__const_rbtn_ptr(this->TreeNode::most_r());
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -115,73 +122,73 @@ RedBlackTreeNode::~RedBlackTreeNode() { this->Release(); }
 #///////////////////////////////////////////////////////////////////////////////
 
 RedBlackTreeNode* RedBlackTreeNode::next() {
-	return PHI__rbt_ptr(this->TreeNode::next());
+	return PHI__rbtn_ptr(this->TreeNode::next());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::next() const {
-	return PHI__const_rbt_ptr(this->TreeNode::next());
+	return PHI__const_rbtn_ptr(this->TreeNode::next());
 }
 
 RedBlackTreeNode* RedBlackTreeNode::prev() {
-	return PHI__rbt_ptr(this->TreeNode::prev());
+	return PHI__rbtn_ptr(this->TreeNode::prev());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::prev() const {
-	return PHI__const_rbt_ptr(this->TreeNode::prev());
+	return PHI__const_rbtn_ptr(this->TreeNode::prev());
 }
 
 RedBlackTreeNode* RedBlackTreeNode::root() {
-	return PHI__rbt_ptr(this->TreeNode::root());
+	return PHI__rbtn_ptr(this->TreeNode::root());
 }
 
 const RedBlackTreeNode* RedBlackTreeNode::root() const {
-	return PHI__const_rbt_ptr(this->TreeNode::root());
+	return PHI__const_rbtn_ptr(this->TreeNode::root());
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
-void RedBlackTreeNode::InsertL(RedBlackTreeNode* node) {
-	this->TreeNode::InsertL(node);
-	node->color_ = red;
-	if (this->color_ == red) { node->InsertFix(); }
+void RedBlackTreeNode::InsertL(RedBlackTreeNode* n) {
+	this->TreeNode::InsertL(n);
+	n->color_ = red;
+	if (this->color_ == red) { n->InsertFix_(); }
 }
 
-void RedBlackTreeNode::InsertR(RedBlackTreeNode* node) {
-	this->TreeNode::InsertR(node);
-	node->color_ = red;
-	if (this->color_ == red) { node->InsertFix(); }
+void RedBlackTreeNode::InsertR(RedBlackTreeNode* n) {
+	this->TreeNode::InsertR(n);
+	n->color_ = red;
+	if (this->color_ == red) { n->InsertFix_(); }
 }
 
-void RedBlackTreeNode::InsertFix() {
+void RedBlackTreeNode::InsertFix_() {
 	RedBlackTreeNode* n(this);
 	RedBlackTreeNode* p;
 	RedBlackTreeNode* g;
 	RedBlackTreeNode* u;
 
-	while ((p = PHI__rbt_ptr(n->p_)) != nullptr && p->color_ == red) {
-		if (p == (g = PHI__rbt_ptr(p->p_))->l_) {
+	while ((p = PHI__rbtn_ptr(n->p_)) != nullptr && p->color_ == red) {
+		if (p == (g = PHI__rbtn_ptr(p->p_))->l_) {
 			if (n == p->r_) {
 				p->RotateL();
-				p = PHI__rbt_ptr((n = p)->p_);
+				p = PHI__rbtn_ptr((n = p)->p_);
 			}
 
 			p->color_ = black;
 			g->color_ = red;
 
-			if ((u = PHI__rbt_ptr(g->r_)) == nullptr || u->color_ == black) {
+			if ((u = PHI__rbtn_ptr(g->r_)) == nullptr || u->color_ == black) {
 				g->RotateR();
 				return;
 			}
 		} else {
 			if (n == p->l_) {
 				p->RotateR();
-				p = PHI__rbt_ptr((n = p)->p_);
+				p = PHI__rbtn_ptr((n = p)->p_);
 			}
 
 			p->color_ = black;
 			g->color_ = red;
 
-			if ((u = PHI__rbt_ptr(g->l_)) == nullptr || u->color_ == black) {
+			if ((u = PHI__rbtn_ptr(g->l_)) == nullptr || u->color_ == black) {
 				g->RotateL();
 				return;
 			}
@@ -206,7 +213,7 @@ void RedBlackTreeNode::Release() {
 	RedBlackTreeNode* m;
 
 	if (n->l_ != nullptr && n->r_ != nullptr) {
-		m = PHI__rbt_ptr(n->l_->most_r());
+		m = PHI__rbtn_ptr(n->l_->most_r());
 
 		Swap(n, m);
 
@@ -217,43 +224,43 @@ void RedBlackTreeNode::Release() {
 	}
 
 	if (n->color_ == black) {
-		if ((m = PHI__rbt_ptr(n->l_)) != nullptr ||
-			(m = PHI__rbt_ptr(n->r_)) != nullptr) {
+		if ((m = PHI__rbtn_ptr(n->l_)) != nullptr ||
+			(m = PHI__rbtn_ptr(n->r_)) != nullptr) {
 			if ((m->p_ = n->p_) != nullptr) {
-				if (n == PHI__rbt_ptr(m->p_)->l_) {
-					PHI__rbt_ptr(m->p_)->l_ = m;
+				if (n == PHI__rbtn_ptr(m->p_)->l_) {
+					PHI__rbtn_ptr(m->p_)->l_ = m;
 				} else {
-					PHI__rbt_ptr(m->p_)->r_ = m;
+					PHI__rbtn_ptr(m->p_)->r_ = m;
 				}
 			}
 
 			if (m->color_ == black) {
-				m->ReleaseFix();
+				m->ReleaseFix_();
 			} else {
 				m->color_ = black;
 			}
 		} else {
-			n->ReleaseFix();
+			n->ReleaseFix_();
 
-			if (n == PHI__rbt_ptr(n->p_)->l_) {
-				PHI__rbt_ptr(n->p_)->l_ = nullptr;
+			if (n == PHI__rbtn_ptr(n->p_)->l_) {
+				PHI__rbtn_ptr(n->p_)->l_ = nullptr;
 			} else {
-				PHI__rbt_ptr(n->p_)->r_ = nullptr;
+				PHI__rbtn_ptr(n->p_)->r_ = nullptr;
 			}
 		}
 	} else {
-		if ((m = PHI__rbt_ptr(n->l_)) != nullptr ||
-			(m = PHI__rbt_ptr(n->r_)) != nullptr) {
-			if (n == PHI__rbt_ptr(m->p_ = n->p_)->l_) {
-				PHI__rbt_ptr(m->p_)->l_ = m;
+		if ((m = PHI__rbtn_ptr(n->l_)) != nullptr ||
+			(m = PHI__rbtn_ptr(n->r_)) != nullptr) {
+			if (n == PHI__rbtn_ptr(m->p_ = n->p_)->l_) {
+				PHI__rbtn_ptr(m->p_)->l_ = m;
 			} else {
-				PHI__rbt_ptr(m->p_)->r_ = m;
+				PHI__rbtn_ptr(m->p_)->r_ = m;
 			}
 		} else {
-			if (n == PHI__rbt_ptr(n->p_)->l_) {
-				PHI__rbt_ptr(n->p_)->l_ = nullptr;
+			if (n == PHI__rbtn_ptr(n->p_)->l_) {
+				PHI__rbtn_ptr(n->p_)->l_ = nullptr;
 			} else {
-				PHI__rbt_ptr(n->p_)->r_ = nullptr;
+				PHI__rbtn_ptr(n->p_)->r_ = nullptr;
 			}
 		}
 	}
@@ -262,21 +269,21 @@ void RedBlackTreeNode::Release() {
 	n->color_ = black;
 }
 
-void RedBlackTreeNode::ReleaseFix() {
+void RedBlackTreeNode::ReleaseFix_() {
 	RedBlackTreeNode* n(this);
 	RedBlackTreeNode* p;
 	RedBlackTreeNode* s;
 
-	while ((p = PHI__rbt_ptr(n->p_)) != nullptr) {
+	while ((p = PHI__rbtn_ptr(n->p_)) != nullptr) {
 		if (n == p->l_) {
-			if ((s = PHI__rbt_ptr(p->r_))->color_ == red) {
+			if ((s = PHI__rbtn_ptr(p->r_))->color_ == red) {
 				p->color_ = red;
 				s->color_ = black;
 				p->RotateL();
-				s = PHI__rbt_ptr(p->r_);
+				s = PHI__rbtn_ptr(p->r_);
 			}
 
-			RedBlackTreeNode* sr(PHI__rbt_ptr(s->r_));
+			RedBlackTreeNode* sr(PHI__rbtn_ptr(s->r_));
 
 			if (sr != nullptr && sr->color_ == red) {
 				s->color_ = p->color_;
@@ -285,7 +292,7 @@ void RedBlackTreeNode::ReleaseFix() {
 				return;
 			}
 
-			RedBlackTreeNode* sl(PHI__rbt_ptr(s->l_));
+			RedBlackTreeNode* sl(PHI__rbtn_ptr(s->l_));
 
 			if (sl != nullptr && sl->color_ == red) {
 				sl->color_ = p->color_;
@@ -295,14 +302,14 @@ void RedBlackTreeNode::ReleaseFix() {
 				return;
 			}
 		} else {
-			if ((s = PHI__rbt_ptr(p->l_))->color_ == red) {
+			if ((s = PHI__rbtn_ptr(p->l_))->color_ == red) {
 				p->color_ = red;
 				s->color_ = black;
 				p->RotateR();
-				s = PHI__rbt_ptr(p->l_);
+				s = PHI__rbtn_ptr(p->l_);
 			}
 
-			RedBlackTreeNode* sl(PHI__rbt_ptr(s->l_));
+			RedBlackTreeNode* sl(PHI__rbtn_ptr(s->l_));
 
 			if (sl != nullptr && sl->color_ == red) {
 				s->color_ = p->color_;
@@ -311,7 +318,7 @@ void RedBlackTreeNode::ReleaseFix() {
 				return;
 			}
 
-			RedBlackTreeNode* sr(PHI__rbt_ptr(s->r_));
+			RedBlackTreeNode* sr(PHI__rbtn_ptr(s->r_));
 
 			if (sr != nullptr && sr->color_ == red) {
 				sr->color_ = p->color_;
@@ -333,22 +340,40 @@ void RedBlackTreeNode::ReleaseFix() {
 	}
 }
 
+void RedBlackTreeNode::ReleaseAll() { ReleaseAll_(this->root()); }
+
+void RedBlackTreeNode::ReleaseAll_(RedBlackTreeNode* n) {
+	n->p_ = nullptr;
+
+	if (n->l_ != nullptr) {
+		ReleaseAll_(PHI__rbtn_ptr(n->l_));
+		n->l_ = nullptr;
+	}
+
+	if (n->r_ != nullptr) {
+		ReleaseAll_(PHI__rbtn_ptr(n->r_));
+		n->r_ = nullptr;
+	}
+
+	n->color_ = black;
+}
+
 #///////////////////////////////////////////////////////////////////////////////
 
 size_t RedBlackTreeNode::Check() const {
 	if (this->p_ != nullptr) {
-		if ((this == PHI__const_rbt_ptr(this->p_)->l_) ==
-			(this == PHI__const_rbt_ptr(this->p_)->r_)) {
+		if ((this == PHI__const_rbtn_ptr(this->p_)->l_) ==
+			(this == PHI__const_rbtn_ptr(this->p_)->r_)) {
 			std::cout << "link error\n";
 		}
 
-		if (this->color_ == red && PHI__rbt_ptr(this->p_)->color_ == red) {
+		if (this->color_ == red && PHI__rbtn_ptr(this->p_)->color_ == red) {
 			std::cout << "color error\n";
 		}
 	}
 
-	size_t l_bh(this->l_ == nullptr ? 0 : PHI__rbt_ptr(this->l_)->Check());
-	size_t r_bh(this->r_ == nullptr ? 0 : PHI__rbt_ptr(this->r_)->Check());
+	size_t l_bh(this->l_ == nullptr ? 0 : PHI__rbtn_ptr(this->l_)->Check());
+	size_t r_bh(this->r_ == nullptr ? 0 : PHI__rbtn_ptr(this->r_)->Check());
 
 	if (l_bh != r_bh) { std::cout << "bh error\n"; }
 
@@ -359,7 +384,7 @@ size_t RedBlackTreeNode::Check() const {
 }
 
 #undef PHI__throw__local
-#undef PHI__rbt_ptr
-#undef PHI__const_rbt_ptr
+#undef PHI__rbtn_ptr
+#undef PHI__const_rbtn_ptr
 
 #endif

@@ -5,17 +5,18 @@
 
 namespace phi {
 
-template<typename T1, typename T2 = T1, typename T3 = T2> struct triple {
-	T1 first;
-	T2 second;
-	T3 third;
+template<typename First, typename Second = First, typename Third = Second>
+struct triple {
+	First first;
+	Second second;
+	Third third;
 
-	triple() {}
+	triple() = default;
 
-	template<typename Y1, typename Y2, typename Y3>
-	triple(Y1&& first_, Y2&& second_, Y3&& third_):
-		first(Forward<Y1>(first_)), second(Forward<Y2>(second_)),
-		third(Forward<Y3>(third_)) {}
+	template<typename First_, typename Second, typename Third>
+	triple(First_&& first_, Second_&& second_, Third_&& third_):
+		first(Forward<First_>(first_)), second(Forward<Second_>(second_)),
+		third(Forward<Third_>(third_)) {}
 };
 
 }

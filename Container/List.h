@@ -12,17 +12,12 @@ namespace cntr {
 
 template<typename T> class List {
 public:
-	struct Node;
-
 	struct Node: public DoublyNode {
+		friend class List;
+
 		T value;
 
 		template<typename... Args> Node(Args&&... args);
-
-		void PushNextAll(DoublyNode* node);
-		void PushNextAllExcept(DoublyNode* node);
-		void PushPrevAll(DoublyNode* node);
-		void PushPrevAllExcept(DoublyNode* node);
 	};
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -33,9 +28,9 @@ public:
 	struct ConstIterator;
 
 	struct Iterator {
-	public:
 		friend class List;
 
+	public:
 		Iterator(const Iterator& iter);
 
 		Iterator& operator=(const Iterator& iter);
@@ -59,9 +54,9 @@ public:
 	};
 
 	struct ConstIterator {
-	public:
 		friend class List;
 
+	public:
 		ConstIterator(const Iterator& iter);
 		ConstIterator(const ConstIterator& iter);
 
@@ -101,9 +96,9 @@ public:
 	ConstIterator last_iterator() const;
 	ConstIterator null_iterator() const;
 
-	ConstIterator first_const_iterator();
-	ConstIterator last_const_iterator();
-	ConstIterator null_const_iterator();
+	ConstIterator first_const_iterator() const;
+	ConstIterator last_const_iterator() const;
+	ConstIterator null_const_iterator() const;
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -161,24 +156,6 @@ template<typename... Args>
 List<T>::Node::Node(Args&&... args): value(Forward<Args>(args)...) {}
 
 #///////////////////////////////////////////////////////////////////////////////
-
-template<typename T> void List<T>::Node::PushNextAll(DoublyNode* node) {
-	this->DoublyNode::PushNextAll(node);
-}
-
-template<typename T> void List<T>::Node::PushNextAllExcept(DoublyNode* node) {
-	this->DoublyNode::PushNextAllExcept(node);
-}
-
-template<typename T> void List<T>::Node::PushPrevAll(DoublyNode* node) {
-	this->DoublyNode::PushPrevAll(node);
-}
-
-template<typename T> void List<T>::Node::PushPrevAllExcept(DoublyNode* node) {
-	this->DoublyNode::PushPrevAllExcept(node);
-}
-
-#///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -211,15 +188,15 @@ typename List<T>::ConstIterator List<T>::null_iterator() const {
 }
 
 template<typename T>
-typename List<T>::ConstIterator List<T>::first_const_iterator() {
+typename List<T>::ConstIterator List<T>::first_const_iterator() const {
 	return ConstIterator(this, this->node_.next());
 }
 template<typename T>
-typename List<T>::ConstIterator List<T>::last_const_iterator() {
+typename List<T>::ConstIterator List<T>::last_const_iterator() const {
 	return ConstIterator(this, this->node_.prev());
 }
 template<typename T>
-typename List<T>::ConstIterator List<T>::null_const_iterator() {
+typename List<T>::ConstIterator List<T>::null_const_iterator() const {
 	return ConstIterator(this, &this->node_);
 }
 
@@ -227,14 +204,14 @@ typename List<T>::ConstIterator List<T>::null_const_iterator() {
 
 template<typename T> List<T>::List(): size_(0) {}
 
-template<typename T> List<T>::List(const List<T>& list): size_(list.size_) {
+template<typename T> List<T>::List(const List& list): size_(list.size_) {
 	for (Node* i(list.node_.next()); i != list.node_;
 		 i = static_cast<Node*>(i->next())) {
 		this->node_.PushPrev(New<Node>(i->value));
 	}
 }
 
-template<typename T> List<T>::List(List<T>&& list): size_(list.size_) {
+template<typename T> List<T>::List(List&& list): size_(list.size_) {
 	list.size_ = 0;
 	Node::Swap(this->node_, list.node_);
 	list.pool_.TransferTo(this->pool_);
@@ -313,12 +290,12 @@ template<typename T> const T& List<T>::front() const {
 
 template<typename T> T& List<T>::back() {
 	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
-	return static_cast<Node*>(this->end_->prev())->value;
+	return static_cast<Node*>(this->node_.prev())->value;
 }
 
 template<typename T> const T& List<T>::back() const {
 	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
-	return static_cast<Node*>(this->end_->prev())->value;
+	return static_cast<Node*>(this->node_.prev())->value;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -406,7 +383,7 @@ List<T>::Iterator::Iterator(const Iterator& iter):
 	list_(iter.list_), node_(iter.node_) {}
 
 template<typename T>
-List<T>::Iterator::Iterator(List<T>* list, DoublyNode* node):
+List<T>::Iterator::Iterator(List* list, DoublyNode* node):
 	list_(list), node_(static_cast<Node*>(node)) {}
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -474,10 +451,8 @@ List<T>::ConstIterator::ConstIterator(const ConstIterator& const_iter):
 	list_(const_iter.list_), node_(const_iter.node_) {}
 
 template<typename T>
-List<T>::ConstIterator::ConstIterator(const List<T>* list,
-									  const DoublyNode* node):
-	list_(list),
-	node_(static_cast<const Node*>(node)) {}
+List<T>::ConstIterator::ConstIterator(const List* list, const DoublyNode* node):
+	list_(list), node_(static_cast<const Node*>(node)) {}
 
 #///////////////////////////////////////////////////////////////////////////////
 

@@ -15,9 +15,9 @@ public:
 	struct ConstIterator;
 
 	class Iterator {
-	public:
-		friend class Vector<T>;
+		friend class Vector;
 
+	public:
 		Iterator(const Iterator& iter);
 
 		operator size_t() const;
@@ -42,16 +42,16 @@ public:
 		template<typename Int> Iterator operator-(Int step) const;
 
 	private:
-		Vector<T>* vector_;
+		Vector* vector_;
 		size_t index_;
 
-		Iterator(Vector<T>* vector, size_t index);
+		Iterator(Vector* vector, size_t index);
 	};
 
 	class ConstIterator {
-	public:
-		friend class Vector<T>;
+		friend class Vector;
 
+	public:
 		ConstIterator(const Iterator& iter);
 		ConstIterator(const ConstIterator& const_iter);
 
@@ -78,10 +78,10 @@ public:
 		template<typename Int> ConstIterator operator-(Int step) const;
 
 	private:
-		const Vector<T>* vector_;
+		const Vector* vector_;
 		size_t index_;
 
-		ConstIterator(const Vector<T>* vector, size_t index);
+		ConstIterator(const Vector* vector, size_t index);
 	};
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -288,6 +288,10 @@ Vector<T>::Vector(BidirectioanlIterator begin, BidirectioanlIterator end):
 template<typename T> Vector<T>::~Vector() {
 	for (size_t i(0); i != this->size_; ++i) { this->data_[i].~T(); }
 	Free(this->data_);
+
+	this->size_ = 0;
+	this->capacity_ = 0;
+	this->data_ = nullptr;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -295,7 +299,7 @@ template<typename T> Vector<T>::~Vector() {
 template<typename T>
 template<typename... Args>
 Vector<T> Vector<T>::Make(Args&&... args) {
-	Vector<T> r;
+	Vector r;
 	r.data_ =
 		Malloc<T>(r.capacity_ = CapacityShouldAlloc(r.size_ = sizeof...(args)));
 	r.Make_<0>(Forward<Args>(args)...);
@@ -314,7 +318,7 @@ void Vector<T>::Make_(X&& x, Args&&... args) {
 
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename T> Vector<T>& Vector<T>::operator=(const Vector<T>& vector) {
+template<typename T> Vector<T>& Vector<T>::operator=(const Vector& vector) {
 	if (this == &vector) { return *this; }
 
 	if (this->capacity_ < vector.size_) {
@@ -347,7 +351,7 @@ template<typename T> Vector<T>& Vector<T>::operator=(const Vector<T>& vector) {
 	return *this;
 }
 
-template<typename T> Vector<T>& Vector<T>::operator=(Vector<T>&& vector) {
+template<typename T> Vector<T>& Vector<T>::operator=(Vector&& vector) {
 	if (this == &vector) { return *this; }
 
 	for (size_t i(0); i != this->size_; ++i) { this->data_[i].~T(); }
@@ -701,7 +705,7 @@ size_t Vector<T>::CapacityShouldAlloc(size_t required_capacity) {
 	return required_capacity * 2;
 }
 
-template<typename T> void Vector<T>::Swap(Vector<T>& x, Vector<T>& y) {
+template<typename T> void Vector<T>::Swap(Vector& x, Vector& y) {
 	phi::Swap(x.size_, y.size_);
 	phi::Swap(x.capacity_, y.capacity_);
 	phi::Swap(x.data_, y.data_);
