@@ -62,8 +62,6 @@ public:
 				is_same<typename remove_reference_and_const<Y>::type,
 						RedBlackTreeNode*>::value);
 
-			static_assert(x_is_rbtn || y_is_rbtn);
-
 			if constexpr (x_is_rbtn && y_is_rbtn) {
 				return this->full_cmper(static_cast<Node*>(x)->value,
 										static_cast<Node*>(y)->value);
@@ -185,6 +183,10 @@ public:
 
 	Set& operator=(const Set& set);
 	Set& operator=(Set&& set);
+
+#///////////////////////////////////////////////////////////////////////////////
+
+	bool operator==(const Set& set) const;
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -610,6 +612,13 @@ void Set<T, FullComparer>::EnPool_(Node* n) {
 
 #undef PHI__EnPool_nl
 #undef PHI__EnPool_nr
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename T, typename FullComparer>
+bool Set<T, FullComparer>::operator==(const Set& set) const {
+	return this->rbt_ == set.rbt_;
+}
 
 #///////////////////////////////////////////////////////////////////////////////
 

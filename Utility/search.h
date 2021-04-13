@@ -60,7 +60,7 @@ size_t BinarySearch(size_t lower, size_t upper, Src& src, const Index& index,
 					FullComparer full_cmper = FullComparer()) {
 	size_t not_find(upper);
 
-	while (lower != upper) {
+	while (lower < upper) {
 		size_t i((lower + upper) / 2);
 
 		switch (full_cmper(index, src[i])) {

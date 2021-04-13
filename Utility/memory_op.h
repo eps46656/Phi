@@ -95,11 +95,20 @@ void CopyBackward(size_t size, Dst&& dst, Src&& src) {
 	}
 }
 
+template<size_t i, size_t size> struct Copy_ {
+	template<typename Dst, typename Src> static void F(Dst&& dst, Src&& src) {
+		Forward<Dst>(dst)[i] = Forward<Src>(src)[i];
+		Copy_<i + 1, size>::F(Forward<Dst>(dst), Forward<Src>(src));
+	}
+};
+
+template<size_t size> struct Copy_<size, size> {
+	template<typename Dst, typename Src> static void F(Dst&& dst, Src&& src) {}
+};
+
 template<size_t size, typename Dst, typename Src>
 void Copy(Dst&& dst, Src&& src) {
-#pragma unroll
-	for (size_t i(0); i != size; ++i)
-		Forward<Dst>(dst)[i] = Forward<Src>(src)[i];
+	Copy_<0, size>::F(Forward<Dst>(dst), Forward<Src>(src));
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -229,6 +238,24 @@ void Init(Dst* dst, Args&&... args) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t i, size_t size> struct Assign_ {
+	template<typename Dst, typename T> static void F(Dst&& dst, T&& value) {
+		dst[i] = Forward<T>(value);
+		Assign_<i + 1, size>::F(dst, Forward<T>(value));
+	}
+};
+
+template<size_t size> struct Assign_<size, size> {
+	template<typename Dst, typename T> static void F(Dst&& dst, T&& value) {}
+};
+
+template<size_t size, typename Dst, typename T>
+void Assign(Dst&& dst, T&& value) {
+	Assign_<0, size>::F(dst, Forward<T>(value));
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<size_t i, size_t size> struct AssignVector_ {
 	template<typename Dst, typename T, typename... Args>
 	static void F(Dst&& dst, T&& x, Args&&... args) {
 		dst[i] = Forward<T>(x);
@@ -236,12 +263,12 @@ template<size_t i, size_t size> struct Assign_ {
 	}
 };
 
-template<size_t size> struct Assign_<size, size> {
+template<size_t size> struct AssignVector_<size, size> {
 	template<typename Dst> static void F(Dst&& dst) {}
 };
 
 template<size_t size, typename Dst, typename... Args>
-void Assign(Dst&& dst, Args&&... args) {
+void AssignVector(Dst&& dst, Args&&... args) {
 	static_assert(size == sizeof...(args), "size error");
 	Assign_<0, size>::F(dst, Forward<Args>(args)...);
 }
@@ -249,35 +276,35 @@ void Assign(Dst&& dst, Args&&... args) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t i, size_t j, size_t col_dim, size_t row_dim, size_t align>
-struct Assign2D_ {
+struct Assign2DVector_ {
 	template<typename Dst, typename T, typename... Args>
 	static void F(Dst&& dst, T&& x, Args&&... args) {
 		Forward<Dst>(dst)[align * i + j] = Forward<T>(x);
-		Assign2D_<i, j + 1, col_dim, row_dim, align>::F(Forward<Dst>(dst),
-														Forward<Args>(args)...);
+		Assign2DVector_<i, j + 1, col_dim, row_dim, align>::F(
+			Forward<Dst>(dst), Forward<Args>(args)...);
 	}
 };
 
 template<size_t i, size_t col_dim, size_t row_dim, size_t align>
-struct Assign2D_<i, row_dim, col_dim, row_dim, align> {
+struct Assign2DVector_<i, row_dim, col_dim, row_dim, align> {
 	template<typename Dst, typename... Args>
 	static void F(Dst&& dst, Args&&... args) {
-		Assign2D_<i + 1, 0, col_dim, row_dim, align>::F(Forward<Dst>(dst),
-														Forward<Args>(args)...);
+		Assign2DVector_<i + 1, 0, col_dim, row_dim, align>::F(
+			Forward<Dst>(dst), Forward<Args>(args)...);
 	}
 };
 
 template<size_t col_dim, size_t row_dim, size_t align>
-struct Assign2D_<col_dim, 0, col_dim, row_dim, align> {
+struct Assign2DVector_<col_dim, 0, col_dim, row_dim, align> {
 	template<typename Dst> static void F(Dst&& dst) {}
 };
 
 template<size_t col_size, size_t row_size, size_t align, typename Dst,
 		 typename... Args>
-void Assign2D(Dst&& dst, Args&&... args) {
+void Assign2DVector(Dst&& dst, Args&&... args) {
 	static_assert(col_size * row_size == sizeof...(args), "size error");
-	Assign2D_<0, 0, col_size, row_size, align>::F(Forward<Dst>(dst),
-												  Forward<Args>(args)...);
+	Assign2DVector_<0, 0, col_size, row_size, align>::F(Forward<Dst>(dst),
+														Forward<Args>(args)...);
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -287,10 +314,9 @@ void Assign2D(Dst&& dst, Args&&... args) {
 template<typename Src, typename Swapper = DefaultSwapper>
 void Reverse(size_t lower, size_t upper, Src& src,
 			 const Swapper& swapper = Swapper()) {
-	size_t size(upper - lower);
-
-	for (size_t i(0); i != size / 2; ++i) {
-		swapper(src[lower + i], src[upper - 1 - i]);
+	if (upper <= lower) { return; }
+	for (--upper; lower < upper; ++lower, --upper) {
+		swapper(src[lower], src[upper]);
 	}
 }
 
@@ -299,80 +325,11 @@ void Reverse(size_t size, Src& src, const Swapper& swapper = Swapper()) {
 	Reverse(0, size, src, swapper);
 }
 
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-
-template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-bool next_permutation(size_t size, Src& src,
-					  const LessThanComparer& lt_cmper = LessThanComparer(),
-					  const Swapper& swapper = Swapper()) {
-	if (size <= 1) { return false; }
-
-	size_t i(size - 1);
-
-	while (lt_cmper(src[i], src[i - 1])) {
-		if (--i == 0) { return false; }
-	}
-
-	size_t j(size - 1);
-
-	while (lt_cmper(src[j], src[i - 1])) { --j; }
-
-	swapper(src[i - 1], src[j]);
-
-	Reverse(i, size, src, swapper);
-
-	return true;
-}
-
-template<typename BidirectionalIterator,
-		 typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-bool next_permutation(BidirectionalIterator begin, BidirectionalIterator end,
-					  const LessThanComparer& lt_cmper = LessThanComparer(),
-					  const Swapper& swapper = Swapper()) {
-	if (begin == end) { return false; }
-	BidirectionalIterator last(end);
-	--last;
-	if (begin == last) { return false; }
-
-	BidirectionalIterator i(last);
-	BidirectionalIterator i_prev(i);
-	--i_prev;
-
-	while (lt_cmper(*i, *i_prev)) {
-		if (i_prev == begin) { return false; }
-		i = i_prev;
-		--i_prev;
-	}
-
-	BidirectionalIterator j(last);
-
-	while (lt_cmper(*j, *i_prev)) { --j; }
-
-	swapper(*i_prev, *j);
-
-	while (i != last) {
-		swapper(*i, *last);
-		++i;
-		if (i == last) { return true; }
-		--last;
-	}
-
-	return true;
-}
-
-template<typename BidirectionalIterator,
-		 typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-bool prev_permutation(BidirectionalIterator begin, BidirectionalIterator end,
-					  const LessThanComparer& lt_cmper = LessThanComparer(),
-					  const Swapper& swapper = Swapper()) {
-	return next_permutation(
-		begin, end, ReverseBoolReturnedFunctor<LessThanComparer>(lt_cmper),
-		swapper);
+template<typename BidirectionalIterator, typename Swapper = DefaultSwapper>
+void Reverse(BidirectionalIterator begin, BidirectionalIterator end,
+			 const Swapper& swapper = Swapper()) {
+	if ((begin == end) || (begin == --end)) { return; }
+	do { swapper(*begin, *end); } while ((++begin != end) && (begin != --end));
 }
 
 }

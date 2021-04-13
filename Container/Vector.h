@@ -265,7 +265,7 @@ template<typename T>
 Vector<T>::Vector(const Vector& vector):
 	size_(vector.size_), capacity_(vector.size_),
 	data_(Malloc<T>(this->capacity_)) {
-	for (size_t i(0); this->size_; ++i) {
+	for (size_t i(0); i != this->size_; ++i) {
 		new (this->data_ + i) T(vector.data_[this->size_]);
 	}
 }
@@ -746,7 +746,7 @@ Vector<T>::Iterator::Iterator(const Iterator& iter):
 	vector_(iter.vector_), index_(iter.index_) {}
 
 template<typename T>
-Vector<T>::Iterator::Iterator(Vector<T>* vector, size_t index):
+Vector<T>::Iterator::Iterator(Vector* vector, size_t index):
 	vector_(vector), index_(index) {}
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -858,7 +858,7 @@ Vector<T>::ConstIterator::ConstIterator(const ConstIterator& const_iter):
 	vector_(const_iter.vector_), index_(const_iter.index_) {}
 
 template<typename T>
-Vector<T>::ConstIterator::ConstIterator(const Vector<T>* vector, size_t index):
+Vector<T>::ConstIterator::ConstIterator(const Vector* vector, size_t index):
 	vector_(vector), index_(index) {}
 
 #///////////////////////////////////////////////////////////////////////////////

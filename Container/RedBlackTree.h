@@ -50,6 +50,10 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
+	bool operator==(const RedBlackTree& rbt) const;
+
+#///////////////////////////////////////////////////////////////////////////////
+
 	template<typename Index> bool Contain(const Index& index) const;
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -209,6 +213,23 @@ void RedBlackTree<FullComparer>::Make_(RedBlackTree& rbt,
 
 template<typename FullComparer>
 void RedBlackTree<FullComparer>::Make_(RedBlackTree& rbt) {}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename FullComparer>
+bool RedBlackTree<FullComparer>::operator==(const RedBlackTree& rbt) const {
+	if (this == &rbt) { return true; }
+	if (this->size_ != rbt.size_) { return false; }
+
+	const RedBlackTreeNode* n(this->first_node());
+	const RedBlackTreeNode* m(rbt.first_node());
+
+	for (; n; n = n->next(), m = m->next()) {
+		if (this->full_cmper_(n, m) != 0) { return false; }
+	}
+
+	return true;
+}
 
 #///////////////////////////////////////////////////////////////////////////////
 

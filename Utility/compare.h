@@ -396,4 +396,42 @@ using ReverseFullComparer =
 
 }
 
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Comparer> struct ReverseComparer: public Comparer {
+	const Comparer& cmper;
+
+	ReverseComparer(const Comparer& cmper): cmper(cmper) {}
+
+	template<typename X, typename Y> int operator()(X& x, Y& y) const {
+		return -this->cmper.operator()(x, y);
+	}
+
+	template<typename X, typename Y> bool eq(X& x, Y& y) const {
+		return this->cmper.eq(x, y);
+	}
+
+	template<typename X, typename Y> bool ne(X& x, Y& y) const {
+		return this->cmper.ne(x, y);
+	}
+
+	template<typename X, typename Y> bool lt(X& x, Y& y) const {
+		return this->cmper.gt(x, y);
+	}
+
+	template<typename X, typename Y> bool gt(X& x, Y& y) const {
+		return this->cmper.lt(x, y);
+	}
+
+	template<typename X, typename Y> bool le(X& x, Y& y) const {
+		return this->cmper.ge(x, y);
+	}
+
+	template<typename X, typename Y> bool ge(X& x, Y& y) const {
+		return this->cmper.le(x, y);
+	}
+};
+
 #endif

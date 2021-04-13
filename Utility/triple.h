@@ -13,7 +13,7 @@ struct triple {
 
 	triple() = default;
 
-	template<typename First_, typename Second, typename Third>
+	template<typename First_, typename Second_, typename Third_>
 	triple(First_&& first_, Second_&& second_, Third_&& third_):
 		first(Forward<First_>(first_)), second(Forward<Second_>(second_)),
 		third(Forward<Third_>(third_)) {}
