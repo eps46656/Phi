@@ -110,17 +110,17 @@ bool ContainLinear(Iterator begin, Iterator end, const Index& index,
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename Src, typename Index,
-		 typename EqualComparer = DefaultEqualComparer>
+		 typename FullComparer = DefaultFullComparer>
 bool ContainBinary(size_t lower, size_t upper, Src& src, const Index& index,
-				   EqualComparer eq_cmper = EqualComparer()) {
-	return upper != BinarySearch(lower, upper, src, index, eq_cmper);
+				   FullComparer full_cmper = FullComparer()) {
+	return upper != BinarySearch(lower, upper, src, index, full_cmper);
 }
 
 template<typename Src, typename Index,
-		 typename EqualComparer = DefaultEqualComparer>
+		 typename FullComparer = DefaultFullComparer>
 bool ContainBinary(size_t size, Src& src, const Index& index,
-				   EqualComparer eq_cmper = EqualComparer()) {
-	return ContainBinary(0, size, src, index, eq_cmper);
+				   FullComparer full_cmper = FullComparer()) {
+	return ContainBinary(0, size, src, index, full_cmper);
 }
 
 }

@@ -26,15 +26,15 @@ double sqrt(double x) {
 	double upper_sq(upper * upper);
 
 	while (PHI__eps < upper - lower) {
-		double i((lower + upper) / 2);
-		double i_sq(i * i);
+		double mid((lower + upper) / 2);
+		double mid_sq(mid * mid);
 
-		if (i_sq < x) {
-			lower = i;
-			lower_sq = i_sq;
+		if (mid_sq < x) {
+			lower = mid;
+			lower_sq = mid_sq;
 		} else {
-			upper = i;
-			upper_sq = i_sq;
+			upper = mid;
+			upper_sq = mid_sq;
 		}
 	}
 
@@ -103,9 +103,7 @@ void atan(double& phase, double& r, double x, double y) {
 	y /= r;
 }
 
-double power(double Utility, double exponent) {
-	return exp(exponent * ln(Utility));
-}
+double power(double base, double exponent) { return exp(exponent * ln(base)); }
 
 }
 }

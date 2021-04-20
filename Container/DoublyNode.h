@@ -8,8 +8,11 @@ namespace phi {
 namespace cntr {
 
 struct DoublyNode {
-	inline DoublyNode* prev() const;
-	inline DoublyNode* next() const;
+	inline DoublyNode* prev();
+	inline DoublyNode* next();
+
+	inline const DoublyNode* prev() const;
+	inline const DoublyNode* next() const;
 
 	inline bool sole() const;
 	inline bool Contain(const DoublyNode* node) const;
@@ -42,9 +45,12 @@ protected:
 	inline void PushNextAll(DoublyNode* node);
 	inline void PushNextAllExcept(DoublyNode* node);
 
-private:
+protected:
 	DoublyNode* prev_;
 	DoublyNode* next_;
+
+	inline void set_prev_(DoublyNode* node);
+	inline void set_next_(DoublyNode* node);
 
 	inline static void Link_(DoublyNode* x, DoublyNode* y);
 };
@@ -53,8 +59,14 @@ private:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-DoublyNode* DoublyNode::prev() const { return this->prev_; }
-DoublyNode* DoublyNode::next() const { return this->next_; }
+DoublyNode* DoublyNode::prev() { return this->prev_; }
+DoublyNode* DoublyNode::next() { return this->next_; }
+
+const DoublyNode* DoublyNode::prev() const { return this->prev_; }
+const DoublyNode* DoublyNode::next() const { return this->next_; }
+
+void DoublyNode::set_prev_(DoublyNode* node) { this->prev_ = node; }
+void DoublyNode::set_next_(DoublyNode* node) { this->next_ = node; }
 
 bool DoublyNode::sole() const { return this->prev_ == this; }
 

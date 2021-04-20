@@ -9,22 +9,27 @@ namespace phi {
 namespace cntr {
 
 struct TreeNode {
-	inline TreeNode* p() const;
-	inline TreeNode* l() const;
-	inline TreeNode* r() const;
+	inline TreeNode* p();
+	inline TreeNode* l();
+	inline TreeNode* r();
+
+	inline const TreeNode* p() const;
+	inline const TreeNode* l() const;
+	inline const TreeNode* r() const;
 
 #///////////////////////////////////////////////////////////////////////////////
 
 	inline TreeNode* most_p();
-	inline const TreeNode* most_p() const;
 	inline TreeNode* most_l();
-	inline const TreeNode* most_l() const;
 	inline TreeNode* most_r();
+
+	inline const TreeNode* most_p() const;
+	inline const TreeNode* most_l() const;
 	inline const TreeNode* most_r() const;
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	bool sole() const;
+	inline bool sole() const;
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -82,9 +87,13 @@ protected:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-TreeNode* TreeNode::p() const { return this->p_; }
-TreeNode* TreeNode::l() const { return this->l_; }
-TreeNode* TreeNode::r() const { return this->r_; }
+TreeNode* TreeNode::p() { return this->p_; }
+TreeNode* TreeNode::l() { return this->l_; }
+TreeNode* TreeNode::r() { return this->r_; }
+
+const TreeNode* TreeNode::p() const { return this->p_; }
+const TreeNode* TreeNode::l() const { return this->l_; }
+const TreeNode* TreeNode::r() const { return this->r_; }
 
 #///////////////////////////////////////////////////////////////////////////////
 

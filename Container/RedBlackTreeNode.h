@@ -19,9 +19,14 @@ struct RedBlackTreeNode: public TreeNode {
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	inline RedBlackTreeNode* p() const;
-	inline RedBlackTreeNode* l() const;
-	inline RedBlackTreeNode* r() const;
+	inline RedBlackTreeNode* p();
+	inline RedBlackTreeNode* l();
+	inline RedBlackTreeNode* r();
+
+	inline const RedBlackTreeNode* p() const;
+	inline const RedBlackTreeNode* l() const;
+	inline const RedBlackTreeNode* r() const;
+
 	inline bool color() const;
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -76,15 +81,20 @@ protected:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-RedBlackTreeNode* RedBlackTreeNode::p() const {
+RedBlackTreeNode* RedBlackTreeNode::p() { return PHI__rbtn_ptr(this->p_); }
+RedBlackTreeNode* RedBlackTreeNode::l() { return PHI__rbtn_ptr(this->l_); }
+RedBlackTreeNode* RedBlackTreeNode::r() { return PHI__rbtn_ptr(this->r_); }
+
+const RedBlackTreeNode* RedBlackTreeNode::p() const {
 	return PHI__rbtn_ptr(this->p_);
 }
-RedBlackTreeNode* RedBlackTreeNode::l() const {
+const RedBlackTreeNode* RedBlackTreeNode::l() const {
 	return PHI__rbtn_ptr(this->l_);
 }
-RedBlackTreeNode* RedBlackTreeNode::r() const {
+const RedBlackTreeNode* RedBlackTreeNode::r() const {
 	return PHI__rbtn_ptr(this->r_);
 }
+
 bool RedBlackTreeNode::color() const { return this->color_; }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -92,23 +102,19 @@ bool RedBlackTreeNode::color() const { return this->color_; }
 RedBlackTreeNode* RedBlackTreeNode::most_p() {
 	return PHI__rbtn_ptr(this->TreeNode::most_p());
 }
-
-const RedBlackTreeNode* RedBlackTreeNode::most_p() const {
-	return PHI__const_rbtn_ptr(this->TreeNode::most_p());
-}
-
 RedBlackTreeNode* RedBlackTreeNode::most_l() {
 	return PHI__rbtn_ptr(this->TreeNode::most_l());
 }
-
-const RedBlackTreeNode* RedBlackTreeNode::most_l() const {
-	return PHI__const_rbtn_ptr(this->TreeNode::most_l());
-}
-
 RedBlackTreeNode* RedBlackTreeNode::most_r() {
 	return PHI__rbtn_ptr(this->TreeNode::most_r());
 }
 
+const RedBlackTreeNode* RedBlackTreeNode::most_p() const {
+	return PHI__const_rbtn_ptr(this->TreeNode::most_p());
+}
+const RedBlackTreeNode* RedBlackTreeNode::most_l() const {
+	return PHI__const_rbtn_ptr(this->TreeNode::most_l());
+}
 const RedBlackTreeNode* RedBlackTreeNode::most_r() const {
 	return PHI__const_rbtn_ptr(this->TreeNode::most_r());
 }

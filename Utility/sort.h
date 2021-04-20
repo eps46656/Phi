@@ -791,19 +791,15 @@ void HeapSort(size_t size, Src& src,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-#define PHI__intro_sort_depth_limit (32)
 #define PHI__heap_sort_threshold (32)
 
 template<typename Src, typename LessThanComparer, typename Swapper>
 void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 					  const LessThanComparer& lt_cmper,
 					  const Swapper& swapper) {
-	if ((depth_limit == 0) | (upper - lower) < PHI__heap_sort_threshold) {
-		HeapSort(lower, upper, src, lt_cmper);
-		return;
-	}
+	while ((depth_limit != 0) && (PHI__heap_sort_threshold <= upper - lower)) {
+		depth_limit /= 2;
 
-	while (PHI__heap_sort_threshold < upper - lower) {
 		swapper(src[lower], src[(lower + upper) / 2]);
 
 		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
@@ -825,11 +821,10 @@ void TwoWayIntroSort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
 		bool b_size(upper - p - 1);
 
 		if (a_size < b_size) {
-			TwoWayIntroSort_(depth_limit - 1, lower, p, src, lt_cmper, swapper);
+			TwoWayIntroSort_(depth_limit, lower, p, src, lt_cmper, swapper);
 			lower = p + 1;
 		} else {
-			TwoWayIntroSort_(depth_limit - 1, p + 1, upper, src, lt_cmper,
-							 swapper);
+			TwoWayIntroSort_(depth_limit, p + 1, upper, src, lt_cmper, swapper);
 			upper = p;
 		}
 	}
@@ -842,8 +837,7 @@ template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
 void TwoWayIntroSort(size_t lower, size_t upper, Src& src,
 					 const LessThanComparer& lt_cmper = LessThanComparer(),
 					 const Swapper& swapper = Swapper()) {
-	TwoWayIntroSort_(PHI__intro_sort_depth_limit, lower, upper, src, lt_cmper,
-					 swapper);
+	TwoWayIntroSort_(upper - lower, lower, upper, src, lt_cmper, swapper);
 }
 
 template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
@@ -861,12 +855,9 @@ template<typename Src, typename FullComparer, typename Swapper,
 void ThreeWayIntroSort_(size_t depth_limit, size_t lower, size_t upper,
 						Src& src, const FullComparer& full_cmper,
 						const Swapper& swapper) {
-	if ((depth_limit == 0) || (upper - lower < PHI__heap_sort_threshold)) {
-		HeapSort(lower, upper, src, full_cmper, swapper);
-		return;
-	}
+	while ((depth_limit != 0) && (PHI__heap_sort_threshold <= upper - lower)) {
+		depth_limit /= 2;
 
-	while (PHI__heap_sort_threshold < upper - lower) {
 		swapper(src[lower], src[(lower + upper) / 2]);
 
 		if (full_cmper.lt(src[upper - 1], src[lower + 1])) {
@@ -888,12 +879,12 @@ void ThreeWayIntroSort_(size_t depth_limit, size_t lower, size_t upper,
 		bool b_size(upper - p.second);
 
 		if (a_size < b_size) {
-			ThreeWayIntroSort_(depth_limit - 1, lower, p.first, src, full_cmper,
+			ThreeWayIntroSort_(depth_limit, lower, p.first, src, full_cmper,
 							   swapper);
 			lower = p.second;
 		} else {
-			ThreeWayIntroSort_(depth_limit - 1, p.second, upper, src,
-							   full_cmper, swapper);
+			ThreeWayIntroSort_(depth_limit, p.second, upper, src, full_cmper,
+							   swapper);
 			upper = p.first;
 		}
 	}
@@ -906,8 +897,7 @@ template<typename Src, typename FullComparer = DefaultFullComparer,
 void ThreeWayIntroSort(size_t lower, size_t upper, Src& src,
 					   const FullComparer& full_cmper = FullComparer(),
 					   const Swapper& swapper = Swapper()) {
-	ThreeWayIntroSort_(PHI__intro_sort_depth_limit, lower, upper, src,
-					   full_cmper, swapper);
+	ThreeWayIntroSort_(upper - lower, lower, upper, src, full_cmper, swapper);
 }
 
 template<typename Src, typename FullComparer = DefaultFullComparer,
@@ -918,7 +908,68 @@ void ThreeWayIntroSort(size_t size, Src& src,
 	ThreeWayIntroSort(0, size, src, full_cmper, swapper);
 }
 
-#undef PHI__intro_sort_depth_limit
+#undef PHI__heap_sort_threshold
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+#define PHI__heap_sort_threshold (32)
+
+template<typename Src, typename LessThanComparer, typename Swapper>
+void Sort_(size_t depth_limit, size_t lower, size_t upper, Src& src,
+		   const LessThanComparer& lt_cmper, const Swapper& swapper) {
+	while ((depth_limit != 0) && (PHI__heap_sort_threshold <= upper - lower)) {
+		depth_limit /= 2;
+
+		swapper(src[lower], src[(lower + upper) / 2]);
+
+		if (lt_cmper.lt(src[upper - 1], src[lower + 1])) {
+			swapper(src[lower + 1], src[upper - 1]);
+		}
+
+		if (lt_cmper.lt(src[lower], src[lower + 1])) {
+			swapper(src[lower], src[lower + 1]);
+		} else if (lt_cmper.lt(src[upper - 1], src[lower])) {
+			swapper(src[lower], src[upper - 1]);
+		}
+
+		size_t p(TwoWayPartition(lower + 2, upper - 1, src, src[lower],
+								 lt_cmper, swapper));
+
+		swapper(src[lower], src[--p]);
+
+		bool a_size(p - lower);
+		bool b_size(upper - p - 1);
+
+		if (a_size < b_size) {
+			Sort_(depth_limit, lower, p, src, lt_cmper, swapper);
+			lower = p + 1;
+		} else {
+			Sort_(depth_limit, p + 1, upper, src, lt_cmper, swapper);
+			upper = p;
+		}
+	}
+
+	HeapSort(lower, upper, src, lt_cmper);
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void Sort(size_t lower, size_t upper, Src& src,
+		  const LessThanComparer& lt_cmper = LessThanComparer(),
+		  const Swapper& swapper = Swapper()) {
+	Sort_(upper - lower, lower, upper, src, lt_cmper, swapper);
+}
+
+template<typename Src, typename LessThanComparer = DefaultLessThanComparer,
+		 typename Swapper = DefaultSwapper>
+void Sort(size_t size, Src& src,
+		  const LessThanComparer& lt_cmper = LessThanComparer(),
+		  const Swapper& swapper = Swapper()) {
+	Sort(0, size, src, lt_cmper, swapper);
+}
+
 #undef PHI__heap_sort_threshold
 
 }

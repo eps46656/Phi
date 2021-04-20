@@ -266,7 +266,7 @@ Vector<T>::Vector(const Vector& vector):
 	size_(vector.size_), capacity_(vector.size_),
 	data_(Malloc<T>(this->capacity_)) {
 	for (size_t i(0); i != this->size_; ++i) {
-		new (this->data_ + i) T(vector.data_[this->size_]);
+		new (this->data_ + i) T(vector.data_[i]);
 	}
 }
 
@@ -517,9 +517,6 @@ void Vector<T>::Insert(size_t index, BidirectionalIterator begin,
 	}
 
 	size_t d_size(Distance(begin, end));
-
-	std::cout << "d_size : " << d_size << "\n";
-
 	if (d_size == 0) { return; }
 
 	// this->size_ : 1 ~ inf

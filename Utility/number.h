@@ -37,6 +37,13 @@ template<typename Int> Int GCD(Int x, Int y) {
 	UnsignedInt a(x < 0 ? -x : x);
 	UnsignedInt b(y < 0 ? -y : y);
 
+	if (a == 0) {
+		if (b == 0) { return 1; }
+		return b;
+	} else if (b == 0) {
+		return a;
+	}
+
 	while ((a %= b) && (b %= a)) {}
 
 	return a + b;

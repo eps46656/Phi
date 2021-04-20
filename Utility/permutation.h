@@ -229,7 +229,8 @@ class IntegerHeapPermutation {
 public:
 	static constexpr size_t max_n = 32;
 
-	static bool Next(size_t& m, size_t* indexes, size_t n, size_t* data);
+	static bool Next(size_t* indexes, size_t n, size_t* data);
+	static bool Prev(size_t* indexes, size_t n, size_t* data);
 
 	template<typename Receiver>
 	static void GenerateAll(size_t n, const Receiver& receiver);
@@ -241,6 +242,9 @@ public:
 	const size_t* data() const;
 
 	template<typename... Args> void set(size_t n, Args&&... args);
+
+	void set_first();
+	void set_last();
 	void reset();
 
 	void is_end() const;
@@ -268,34 +272,62 @@ private:
 
 	size_t n_;
 	size_t data_[max_n];
-	bool is_end_;
-
-	size_t m_;
 	size_t indexes_[max_n];
+	bool is_null_;
 };
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-bool IntegerHeapPermutation::Next(size_t& m, size_t* indexes, size_t n,
-								  size_t* data) {
-	while (indexes[m] == m + 1) {
-		indexes[m] = 0;
-		if (++m == n - 1) { return false; }
+bool IntegerHeapPermutation::Next(size_t* indexes, size_t n, size_t* data) {
+	size_t i(0);
+
+	while (indexes[i] == i + 1) {
+		indexes[i] = 0;
+		if (++i == n - 1) { return false; }
 	}
 
-	if (m % 2 == 0) {
-		Swap(data[indexes[m]], data[m + 1]);
+	if (i % 2 == 0) {
+		Swap(data[indexes[i]], data[i + 1]);
 	} else {
-		Swap(data[0], data[m + 1]);
+		Swap(data[0], data[i + 1]);
 	}
 
-	++indexes[m];
-	m = 0;
+	++indexes[i];
+	return true;
+}
+
+bool IntegerHeapPermutation::Prev(size_t* indexes, size_t n, size_t* data) {
+	size_t i(0);
+
+	while (indexes[i] == 0) {
+		indexes[i] = i + 1;
+		if (++i == n - 1) { return false; }
+	}
+
+	--indexes[i];
+
+	if (i % 2 == 0) {
+		Swap(data[indexes[i]], data[i + 1]);
+	} else {
+		Swap(data[0], data[i + 1]);
+	}
 
 	return true;
 }
+
+/*
+
+indexes bit number | state number
+1                  | 2
+2                  | 2 * 3 = 3! = 6
+3                  | 2 * 3 * 4 = 4! = 24
+n-1                | n!
+
+a "n permutation" has n! state, onlyt nead n-1 bit number indexes
+
+*/
 
 template<typename Receiver>
 void IntegerHeapPermutation::GenerateAll(size_t n, const Receiver& receiver) {
@@ -355,48 +387,70 @@ const size_t* IntegerHeapPermutation::data() const { return this->data_; }
 #///////////////////////////////////////////////////////////////////////////////
 
 IntegerHeapPermutation::IntegerHeapPermutation(size_t n): n_(n) {
-	this->reset();
+	this->set_first();
 }
 
-IntegerHeapPermutation::operator bool() const { return !this->is_end_; }
+IntegerHeapPermutation::operator bool() const { return !this->is_null_; }
 
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename... Args>
-void IntegerHeapPermutation::set(size_t n, Args&&... args) {
-	PHI__debug_if(n != sizeof...(args)) {
-		PHI__throw(IntegerHeapPermutation, "set", "size error");
+void IntegerHeapPermutation::set_first() {
+	if (this->n_ == 0) {
+		this->is_null_ = true;
+		return;
 	}
 
-	this->n_ = n;
-	AssignVector<sizeof...(args)>(this->data_, Forward<Args>(args)...);
-	Assign<sizeof...(args)>(this->indexes_, 0);
-	this->m_ = 0;
-	this->is_end_ = this->n_ == 0;
-}
-
-void IntegerHeapPermutation::reset() {
 	for (size_t i(0); i != this->n_; ++i) {
 		this->data_[i] = i;
 		this->indexes_[i] = 0;
 	}
 
-	this->m_ = 0;
-	this->is_end_ = this->n_ == 0;
+	this->is_null_ = false;
 }
+
+void IntegerHeapPermutation::set_last() {
+	if (this->n_ == 0) {
+		this->is_null_ = true;
+		return;
+	}
+
+	for (size_t i(0); i != this->n_; ++i) { this->indexes_[i] = i + 1; }
+
+	if (this->n_ % 2 == 0) {
+		for (size_t i(0); i != this->n_ - 1; ++i) { this->data_[i] = i + 1; }
+		this->data_[this->n_ - 1] = 0;
+	} else {
+		this->data_[0] = this->n_ - 1;
+
+		if (this->n_ != 1) {
+			for (size_t i(1); i != this->n_ - 1; ++i) { this->data_[i] = i; }
+			this->data_[this->n_ - 1] = 0;
+		}
+	}
+
+	this->is_null_ = false;
+}
+
+void IntegerHeapPermutation::reset() { this->set_first(); }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 IntegerHeapPermutation& IntegerHeapPermutation::operator++() {
-	if (!this->is_end_) {
-		this->is_end_ = !Next(this->m_, this->indexes_, this->n_, this->data_);
+	if (this->is_null_) {
+		this->set_first();
+	} else {
+		this->is_null_ = !Next(this->indexes_, this->n_, this->data_);
 	}
 
 	return *this;
 }
 
 IntegerHeapPermutation& IntegerHeapPermutation::operator--() {
-	// TODO
+	if (this->is_null_) {
+		this->set_last();
+	} else {
+		this->is_null_ = !Prev(this->indexes_, this->n_, this->data_);
+	}
 
 	return *this;
 }

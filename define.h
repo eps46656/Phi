@@ -1,9 +1,6 @@
 #ifndef PHI__define_guard__define_h
 #define PHI__define_guard__define_h
 
-#include <assert.h>
-#include <iostream>
-
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -15,7 +12,10 @@
 #///////////////////////////////////////////////////////////////////////////////
 
 #if PHI__debug_flag
-	#define PHI__debug if constexpr (true)
+	#include <iostream>
+	#include <assert.h>
+
+	#define PHI__debug
 	#define PHI__debug_if(x) if (x)
 
 	#define PHI__throw__(type, func, desc)                                     \
@@ -26,10 +26,13 @@
 		}
 #else
 	#define PHI__debug if constexpr (false)
-	#define PHI__debug_if(x) if (false)
+	#define PHI__debug_if(x) if constexpr (false)
 
 	#define PHI__throw__(type, func, desc) ;
 #endif
+
+#define PHI__print_line                                                        \
+	{ std::cout << __LINE__ << "\n"; }
 
 #define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
 #define PHI__throw(type, func, desc) PHI__throw_(type, func, desc)
