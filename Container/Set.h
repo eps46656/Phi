@@ -12,8 +12,6 @@
 namespace phi {
 namespace cntr {
 
-template<typename T, typename FullComparer> class Set;
-
 template<typename T, typename FullComparer = DefaultFullComparer> class Set {
 public:
 	struct Node;
@@ -199,7 +197,7 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	template<typename... Args> bool Insert(Args&&... args);
+	template<typename... Args> pair<Iterator, bool> Insert(Args&&... args);
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -634,25 +632,33 @@ template<typename T, typename FullComparer>
 template<typename Index>
 typename Set<T, FullComparer>::Iterator
 Set<T, FullComparer>::Find(const Index& index) {
-	return Iterator(this, this->rbt_.Find_(index));
+	return Iterator(this, static_cast<Node*>(this->rbt_.Find_(index)));
 }
 
 template<typename T, typename FullComparer>
 template<typename Index>
 typename Set<T, FullComparer>::ConstIterator
 Set<T, FullComparer>::Find(const Index& index) const {
-	return ConstIterator(this, this->rbt_.Find_(index));
+	return ConstIterator(this,
+						 static_cast<const Node*>(this->rbt_.Find_(index)));
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T, typename FullComparer>
 template<typename... Args>
-bool Set<T, FullComparer>::Insert(Args&&... args) {
+pair<typename Set<T, FullComparer>::Iterator, bool>
+Set<T, FullComparer>::Insert(Args&&... args) {
 	Node* node(new (this->pool_.Pop()) Node(Forward<Args>(args)...));
-	if (this->rbt_.Insert(node)) { return true; }
+	Node* n(static_cast<Node*>(this->rbt_.Insert(node)));
+
+	if (node == n) {
+		return pair<Iterator, bool>(Iterator(this, static_cast<Node*>(node)),
+									true);
+	}
+
 	this->pool_.Push(node);
-	return false;
+	return pair<Iterator, bool>(Iterator(this, n), false);
 }
 
 #///////////////////////////////////////////////////////////////////////////////

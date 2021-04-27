@@ -11,6 +11,9 @@ template<typename First, typename Second = First> struct pair {
 
 	pair() = default;
 
+	template<typename First_>
+	pair(First_&& first_): first(Forward<First_>(first_)) {}
+
 	template<typename First_, typename Second_>
 	pair(First_&& first_, Second_&& second_):
 		first(Forward<First_>(first_)), second(Forward<Second_>(second_)) {}

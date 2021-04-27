@@ -2,7 +2,9 @@
 #define PHI__define_guard__Container__Vector_h
 
 #include "../Utility/memory.h"
+#include "../Utility/compare.h"
 #include "../Utility/swap.h"
+#include "../Utility/iterator.h"
 
 #define PHI__throw__local(desc) PHI__throw(cntr::Vector<T>, __func__, desc)
 
@@ -18,28 +20,40 @@ public:
 		friend class Vector;
 
 	public:
+		using Type = iterator::Type::RandomAccess;
+		using Value = T;
+		using Ref = T&;
+		using Ptr = T*;
+		using Diff = diff_t;
+
 		Iterator(const Iterator& iter);
 
 		operator size_t() const;
 
 		Iterator& operator=(const Iterator& iter);
 
+		bool operator<(const Iterator& iter) const;
+		bool operator<(const ConstIterator& iter) const;
+
 		bool operator==(const Iterator& iter) const;
 		bool operator!=(const Iterator& iter) const;
 		bool operator==(const ConstIterator& const_iter) const;
 		bool operator!=(const ConstIterator& const_iter) const;
 
-		T& operator*() const;
-		T* operator->() const;
+		Ref operator*() const;
+		Ptr operator->() const;
 
 		Iterator& operator++();
 		Iterator& operator--();
 
-		template<typename Int> Iterator& operator+=(Int step);
-		template<typename Int> Iterator& operator-=(Int step);
+		Iterator& operator+=(Diff step);
+		Iterator& operator-=(Diff step);
 
-		template<typename Int> Iterator operator+(Int step) const;
-		template<typename Int> Iterator operator-(Int step) const;
+		Iterator operator+(Diff step) const;
+		Iterator operator-(Diff step) const;
+		Diff operator-(const Iterator& iter) const;
+
+		Ref operator[](Diff index) const;
 
 	private:
 		Vector* vector_;
@@ -52,6 +66,12 @@ public:
 		friend class Vector;
 
 	public:
+		using Type = iterator::Type::RandomAccess;
+		using Value = T;
+		using Ref = const T&;
+		using Ptr = const T*;
+		using Diff = diff_t;
+
 		ConstIterator(const Iterator& iter);
 		ConstIterator(const ConstIterator& const_iter);
 
@@ -59,6 +79,9 @@ public:
 
 		ConstIterator& operator=(const Iterator& iter);
 		ConstIterator& operator=(const ConstIterator& iter);
+
+		bool operator<(const Iterator& iter) const;
+		bool operator<(const ConstIterator& iter) const;
 
 		bool operator==(const Iterator& iter) const;
 		bool operator!=(const Iterator& iter) const;
@@ -71,11 +94,14 @@ public:
 		ConstIterator& operator++();
 		ConstIterator& operator--();
 
-		template<typename Int> ConstIterator& operator+=(Int step);
-		template<typename Int> ConstIterator& operator-=(Int step);
+		ConstIterator& operator+=(Diff step);
+		ConstIterator& operator-=(Diff step);
 
-		template<typename Int> ConstIterator operator+(Int step) const;
-		template<typename Int> ConstIterator operator-(Int step) const;
+		ConstIterator operator+(Diff step) const;
+		ConstIterator operator-(Diff step) const;
+		Diff operator-(const ConstIterator& const_iterator) const;
+
+		Ref operator[](Diff index) const;
 
 	private:
 		const Vector* vector_;
@@ -198,10 +224,8 @@ protected:
 	template<size_t i, typename X, typename... Args>
 	void Make_(X&& x, Args&&... args);
 
-	template<typename Int>
-	size_t index_pos_offset_(size_t index, Int offset) const;
-	template<typename Int>
-	size_t index_neg_offset_(size_t index, Int offset) const;
+	size_t index_pos_diff_(size_t index, diff_t diff) const;
+	size_t index_neg_diff_(size_t index, diff_t diff) const;
 };
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -432,9 +456,23 @@ template<typename T> const T& Vector<T>::at(size_t index) const {
 template<typename T>
 template<typename... Args>
 T& Vector<T>::Push(Args&&... args) {
-	this->Reserve(this->size_ + 1);
-	T* r(new (this->data_ + this->size_) T(Forward<Args>(args)...));
+	if (this->size_ != this->capacity_) {
+		return *(new (this->data_ + (++this->size_) - 1)
+					 T(Forward<Args>(args)...));
+	}
+
+	T* data(Malloc<T>(this->capacity_ = CapacityShouldAlloc(this->size_ + 1)));
+	T* r(new (data + this->size_) T(Forward<Args>(args)...));
+
+	for (size_t i(0); i != this->size_; ++i) {
+		new (data + i) T(Move(this->data_[i]));
+		this->data_[i].~T();
+	}
+
+	Free(this->data_);
+	this->data_ = data;
 	++this->size_;
+
 	return *r;
 }
 
@@ -711,24 +749,22 @@ template<typename T> void Vector<T>::Swap(Vector& x, Vector& y) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-template<typename Int>
-size_t Vector<T>::index_pos_offset_(size_t index, Int offset) const {
-	if (offset < 0) {
-		return this->size_ - (this->size_ - index - offset) % (this->size_ + 1);
+size_t Vector<T>::index_pos_diff_(size_t index, diff_t diff) const {
+	if (diff < 0) {
+		return this->size_ - (this->size_ - index - diff) % (this->size_ + 1);
 	}
 
-	if (0 < offset) { return (index + offset) % (this->size_ + 1); }
+	if (0 < diff) { return (index + diff) % (this->size_ + 1); }
 
 	return index;
 }
 
 template<typename T>
-template<typename Int>
-size_t Vector<T>::index_neg_offset_(size_t index, Int offset) const {
-	if (offset < 0) { return (index - offset) % (this->size_ + 1); }
+size_t Vector<T>::index_neg_diff_(size_t index, diff_t diff) const {
+	if (diff < 0) { return (index - diff) % (this->size_ + 1); }
 
-	if (0 < offset) {
-		return this->size_ - (this->size_ - index + offset) % (this->size_ + 1);
+	if (0 < diff) {
+		return this->size_ - (this->size_ - index + diff) % (this->size_ + 1);
 	}
 
 	return index;
@@ -763,6 +799,17 @@ Vector<T>::Iterator::operator=(const Iterator& iter) {
 }
 
 #///////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+bool Vector<T>::Iterator::operator<(const Iterator& iter) const {
+	return this->vector_ == iter.vector_ && this->index_ < iter.index_;
+}
+
+template<typename T>
+bool Vector<T>::Iterator::operator<(const ConstIterator& const_iter) const {
+	return this->vector_ == const_iter.vector_ &&
+		   this->index_ < const_iter.index_;
+}
 
 template<typename T>
 bool Vector<T>::Iterator::operator==(const Iterator& iter) const {
@@ -813,33 +860,44 @@ typename Vector<T>::Iterator& Vector<T>::Iterator::operator--() {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-template<typename Int>
-typename Vector<T>::Iterator& Vector<T>::Iterator::operator+=(Int offset) {
-	this->index_ = this->vector->index_pos_offset_(this->index_, offset);
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator+=(Diff diff) {
+	this->index_ = this->vector->index_pos_diff_(this->index_, diff);
 	return *this;
 }
 
 template<typename T>
-template<typename Int>
-typename Vector<T>::Iterator& Vector<T>::Iterator::operator-=(Int offset) {
-	this->index_ = this->vector->index_neg_offset_(this->index_, offset);
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator-=(Diff diff) {
+	this->index_ = this->vector->index_neg_diff_(this->index_, diff);
 	return *this;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-template<typename Int>
-typename Vector<T>::Iterator Vector<T>::Iterator::operator+(Int offset) const {
+typename Vector<T>::Iterator Vector<T>::Iterator::operator+(Diff diff) const {
 	return Iterator(this->vector_,
-					this->vector->index_pos_offset_(this->index_, offset));
+					this->vector_->index_pos_diff_(this->index_, diff));
 }
 
 template<typename T>
-template<typename Int>
-typename Vector<T>::Iterator Vector<T>::Iterator::operator-(Int offset) const {
+typename Vector<T>::Iterator Vector<T>::Iterator::operator-(Diff diff) const {
 	return Iterator(this->vector_,
-					this->vector->index_neg_offset_(this->index_, offset));
+					this->vector_->index_neg_diff_(this->index_, diff));
+}
+
+template<typename T>
+typename Vector<T>::Iterator::Diff
+Vector<T>::Iterator::operator-(const Iterator& iter) const {
+	return this->index_ - iter.index_;
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+typename Vector<T>::Iterator::Ref
+Vector<T>::Iterator::operator[](Diff index) const {
+	return this->vector_
+		->data_[this->vector_->index_pos_diff_(this->index_, index)];
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -883,6 +941,18 @@ Vector<T>::ConstIterator::operator=(const ConstIterator& const_iter) {
 }
 
 #///////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+bool Vector<T>::ConstIterator::operator<(const Iterator& iter) const {
+	return this->vector_ == iter.vector_ && this->index_ < iter.index_;
+}
+
+template<typename T>
+bool Vector<T>::ConstIterator::operator<(
+	const ConstIterator& const_iter) const {
+	return this->vector_ == const_iter.vector_ &&
+		   this->index_ < const_iter.index_;
+}
 
 template<typename T>
 bool Vector<T>::ConstIterator::operator==(const Iterator& iter) const {
@@ -935,37 +1005,48 @@ typename Vector<T>::ConstIterator& Vector<T>::ConstIterator::operator--() {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-template<typename Int>
 typename Vector<T>::ConstIterator&
-Vector<T>::ConstIterator::operator+=(Int offset) {
-	this->index_ = this->vector_->index_pos_offset_(this->index, offset);
+Vector<T>::ConstIterator::operator+=(Diff diff) {
+	this->index_ = this->vector_->index_pos_diff_(this->index, diff);
 	return *this;
 }
 
 template<typename T>
-template<typename Int>
 typename Vector<T>::ConstIterator&
-Vector<T>::ConstIterator::operator-=(Int offset) {
-	this->index_ = this->vector_->index_neg_offset_(this->index, offset);
+Vector<T>::ConstIterator::operator-=(Diff diff) {
+	this->index_ = this->vector_->index_neg_diff_(this->index, diff);
 	return *this;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-template<typename Int>
 typename Vector<T>::ConstIterator
-Vector<T>::ConstIterator::operator+(Int offset) const {
-	return ConstIterator(
-		this->vector_, this->vector_->index_pos_offset_(this->index_, offset));
+Vector<T>::ConstIterator::operator+(Diff diff) const {
+	return ConstIterator(this->vector_,
+						 this->vector_->index_pos_diff_(this->index_, diff));
 }
 
 template<typename T>
-template<typename Int>
 typename Vector<T>::ConstIterator
-Vector<T>::ConstIterator::operator-(Int offset) const {
-	return ConstIterator(
-		this->vector_, this->vector_->index_neg_offset_(this->index_, -offset));
+Vector<T>::ConstIterator::operator-(Diff diff) const {
+	return ConstIterator(this->vector_,
+						 this->vector_->index_neg_diff_(this->index_, -diff));
+}
+
+template<typename T>
+typename Vector<T>::ConstIterator::Diff
+Vector<T>::ConstIterator::operator-(const ConstIterator& const_iter) const {
+	return this->index_ - const_iter.index_;
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+typename Vector<T>::ConstIterator::Ref
+Vector<T>::ConstIterator::operator[](Diff index) const {
+	return this->vector_
+		->data_[this->vector->index_pos_diff_(this->index_, index)];
 }
 
 }

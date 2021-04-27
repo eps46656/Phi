@@ -10,9 +10,12 @@ namespace cntr {
 
 template<typename Index, typename Value, typename FullComparer>
 struct MapFullComparer_ {
-	const FullComparer& full_cmper;
+	FullComparer full_cmper;
 
-	MapFullComparer_(const FullComparer& full_cmper): full_cmper(full_cmper) {}
+	template<typename... FullComparerConstructArgs>
+	MapFullComparer_(FullComparerConstructArgs&&... full_cmper_construct_args):
+		full_cmper(
+			Forward<FullComparerConstructArgs>(full_cmper_construct_args)...) {}
 
 	int operator()(const pair<Index, Value>& x,
 				   const pair<Index, Value>& y) const {

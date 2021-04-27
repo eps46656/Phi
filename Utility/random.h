@@ -9,16 +9,16 @@
 
 namespace phi {
 
-inline bool rand_init_() {
+inline void srand(long int seed) { srand48(seed); }
+
+inline long int srand() {
 	time_t t;
-	srand48((unsigned int)time(&t));
-	return true;
+	long int seed((long int)time(&t));
+	srand(seed);
+	return seed;
 }
 
-inline unsigned long int rand() {
-	static bool init(rand_init_());
-	return lrand48();
-}
+inline unsigned long int rand() { return lrand48(); }
 
 inline unsigned int rand(unsigned int lower, unsigned int upper) {
 	return rand() % (upper - lower) + lower;

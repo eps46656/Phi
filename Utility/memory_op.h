@@ -181,7 +181,6 @@ inline void Memcpy(size_t size, void* dst, const void* src) {
 	if (dst == src) { return; }
 	if (static_cast<const char*>(src) < static_cast<char*>(dst) &&
 		static_cast<char*>(dst) < static_cast<const char*>(src) + size) {
-		std::cout << "b\n";
 		MemcpyBackward(size, dst, src);
 	} else {
 		MemcpyForward(size, dst, src);

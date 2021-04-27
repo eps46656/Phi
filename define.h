@@ -18,10 +18,24 @@
 	#define PHI__debug
 	#define PHI__debug_if(x) if (x)
 
+	#define PHI__print_pos                                                     \
+		{ std::cout << __FILE__ << " : " << __LINE__ << std::endl; }
+
+	#define PHI__print_value(value)                                            \
+		{ std::cout << #value << ": " << value << "\n"; }
+
+	#define PHI__interrupt                                                     \
+		{                                                                      \
+			PHI__print_pos;                                                    \
+			std::cout << "block: press enter to continue" << std::flush;       \
+			char c___;                                                         \
+			std::cin.getline(&c___, 1);                                        \
+		}
+
 	#define PHI__throw__(type, func, desc)                                     \
 		{                                                                      \
 			std::cout << __LINE__ << " " << type << "::" << func << "\n\t"     \
-					  << desc << "\n";                                         \
+					  << desc << std::endl;                                    \
 			assert(false);                                                     \
 		}
 #else
@@ -30,9 +44,6 @@
 
 	#define PHI__throw__(type, func, desc) ;
 #endif
-
-#define PHI__print_line                                                        \
-	{ std::cout << __LINE__ << "\n"; }
 
 #define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
 #define PHI__throw(type, func, desc) PHI__throw_(type, func, desc)
@@ -137,6 +148,19 @@ template<typename T> struct remove_reference_and_const {
 		typename remove_const<typename remove_reference<T>::type>::type;
 };
 
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Derive, typename Base> struct base_on {
+	static constexpr bool F(const void*) { return false; }
+	static constexpr bool F(Base*) { return true; }
+
+	static constexpr bool value = F((Derive*)(0));
+};
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename BoolReturnedFunctor> struct ReverseBoolReturnedFunctor {

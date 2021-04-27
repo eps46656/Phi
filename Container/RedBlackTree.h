@@ -64,7 +64,7 @@ public:
 
 #///////////////////////////////////////////////////////////////////////////////
 
-	bool Insert(RedBlackTreeNode* node);
+	RedBlackTreeNode* Insert(RedBlackTreeNode* node);
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -91,7 +91,7 @@ protected:
 	static void Make_(RedBlackTree& rbt);
 
 	template<typename Index> RedBlackTreeNode* Find_(const Index& index) const;
-	bool Insert_(RedBlackTreeNode* node);
+	RedBlackTreeNode* Insert_(RedBlackTreeNode* node);
 	void Release_(RedBlackTreeNode* node);
 
 	static void Clear_(RedBlackTreeNode* node);
@@ -271,12 +271,11 @@ RedBlackTree<FullComparer>::Find(const Index& index) const {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename FullComparer>
-bool RedBlackTree<FullComparer>::Insert_(RedBlackTreeNode* node) {
+RedBlackTreeNode* RedBlackTree<FullComparer>::Insert_(RedBlackTreeNode* node) {
 	if (this->size_ == 0) {
 		++this->size_;
 		this->root_ = node;
-
-		return true;
+		return node;
 	}
 
 	for (RedBlackTreeNode* n(this->root_);;) {
@@ -297,7 +296,7 @@ bool RedBlackTree<FullComparer>::Insert_(RedBlackTreeNode* node) {
 
 				n = static_cast<RedBlackTreeNode*>(n->r());
 				break;
-			case 0: return false;
+			case 0: return n;
 		}
 	}
 
@@ -306,11 +305,11 @@ insert_complete:;
 	++this->size_;
 	this->root_ = static_cast<RedBlackTreeNode*>(this->root_->most_p());
 
-	return true;
+	return node;
 }
 
 template<typename FullComparer>
-bool RedBlackTree<FullComparer>::Insert(RedBlackTreeNode* node) {
+RedBlackTreeNode* RedBlackTree<FullComparer>::Insert(RedBlackTreeNode* node) {
 	PHI__debug_if(!node->sole()) { PHI__throw__local("node is not sole"); }
 	return this->Insert_(node);
 }
