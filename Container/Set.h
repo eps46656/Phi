@@ -686,7 +686,7 @@ Set<T, FullComparer>::Erase(const Iterator& iter) {
 template<typename T, typename FullComparer>
 template<typename Index>
 bool Set<T, FullComparer>::FindErase(const Index& index) {
-	Node* node(this->Find_(index));
+	Node* node(static_cast<Node*>(this->rbt_.Find_(index)));
 	if (node == nullptr) { return false; }
 	this->rbt_.Release_(node);
 	this->pool_.Push(node);

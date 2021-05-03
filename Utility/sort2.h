@@ -299,10 +299,10 @@ void UnrestrictedLinearInsert(
 	*last = Move(value);
 }
 
-template<typename RandomAccessIterator,
+template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void UnrestrictedInsertionSort(
-	RandomAccessIterator begin, RandomAccessIterator end,
+	BidirectionalIterator begin, BidirectionalIterator end,
 	const LessThanComparer& lt_cmper = LessThanComparer()) {
 	for (; begin != end; ++begin) { UnrestrictedLinearInsert(begin, lt_cmper); }
 }
@@ -688,7 +688,7 @@ void Sort(RandomAccessIterator begin, RandomAccessIterator end,
 		  const Swapper& swapper = Swapper()) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
-	if (begin == end) { return; }
+	if (!(begin < end)) { return; }
 	Sort_a_((end - begin) * Diff(4), begin, end, lt_cmper, swapper);
 }
 

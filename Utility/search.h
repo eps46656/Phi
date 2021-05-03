@@ -3,35 +3,16 @@
 
 #include "compare.h"
 #include "pair.h"
+#include "iterator.h"
 
 namespace phi {
-
-template<typename Src, typename Index,
-		 typename EqualComparer = DefaultEqualComparer>
-size_t LinearSearch(size_t lower, size_t upper, Src& src, const Index& index,
-					EqualComparer eq_cmper = EqualComparer()) {
-	for (; lower < upper; ++lower) {
-		if (eq_cmper(src[lower], index)) { return lower; }
-	}
-
-	return upper;
-}
-
-template<typename Src, typename Index,
-		 typename EqualComparer = DefaultEqualComparer>
-size_t LinearSearch(size_t size, Src& src, const Index& index,
-					EqualComparer eq_cmper = EqualComparer()) {
-	return LinearSearch(size, src, index, eq_cmper);
-}
-
-#///////////////////////////////////////////////////////////////////////////////
 
 template<typename ForwardIterator, typename Index,
 		 typename EqualComparer = DefaultEqualComparer>
 ForwardIterator LinearSearch(ForwardIterator begin, ForwardIterator end,
 							 const Index& index,
 							 EqualComparer eq_cmper = EqualComparer()) {
-	while (begin != end && !eq_cmper(*begin, index)) { ++begin; }
+	while (begin != end && !eq_cmper.eq(*begin, index)) { ++begin; }
 	return begin;
 }
 
@@ -42,7 +23,7 @@ LinearSearch(size_t size, ForwardIterator begin, const Index& index,
 			 EqualComparer eq_cmper = EqualComparer()) {
 	size_t i(0);
 
-	while (i != size && !eq_cmper(*begin, index)) {
+	while (i != size && !eq_cmper.eq(*begin, index)) {
 		++begin;
 		++i;
 	}
@@ -54,30 +35,26 @@ LinearSearch(size_t size, ForwardIterator begin, const Index& index,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename Src, typename Index,
+template<typename RandomAccessIterator, typename Index,
 		 typename FullComparer = DefaultFullComparer>
-size_t BinarySearch(size_t lower, size_t upper, Src& src, const Index& index,
-					FullComparer full_cmper = FullComparer()) {
-	size_t not_find(upper);
+typename iterator::trait<RandomAccessIterator>::Diff
+BinarySearch(RandomAccessIterator begin, RandomAccessIterator end,
+			 const Index& index, FullComparer full_cmper = FullComparer()) {
+	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
-	while (lower < upper) {
-		size_t i((lower + upper) / 2);
+	RandomAccessIterator not_find(end);
 
-		switch (full_cmper(index, src[i])) {
-			case -1: upper = i; break;
-			case 1: lower = i + 1; break;
-			case 0: return i;
+	while (begin < end) {
+		RandomAccessIterator mid(begin + (end - begin) / Diff(2));
+
+		switch (full_cmper(index, *mid)) {
+			case -1: end = mid; break;
+			case 1: begin = mid + Diff(1); break;
+			case 0: return mid;
 		}
 	}
 
 	return not_find;
-}
-
-template<typename Src, typename Index,
-		 typename FullComparer = DefaultFullComparer>
-size_t BinarySearch(size_t size, Src& src, const Index& index,
-					FullComparer full_cmper = FullComparer()) {
-	return BinarySearch(0, size, src, index, full_cmper);
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -121,6 +98,14 @@ template<typename Src, typename Index,
 bool ContainBinary(size_t size, Src& src, const Index& index,
 				   FullComparer full_cmper = FullComparer()) {
 	return ContainBinary(0, size, src, index, full_cmper);
+}
+
+template<typename RandomAccessIterator, typename Index,
+		 typename FullComparer = DefaultFullComparer>
+bool ContainBinary(RandomAccessIterator begin, RandomAccessIterator end,
+				   const Index& index,
+				   FullComparer full_cmper = FullComparer()) {
+	return end != BinarySearch(begin, end, index, full_cmper);
 }
 
 }

@@ -6,11 +6,6 @@
 
 namespace phi {
 
-void PrintVector(size_t size, const size_t* data) {
-	for (size_t i(0); i != size; ++i) { std::cout << data[i] << ' '; }
-	std::cout << '\n';
-}
-
 template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 bool IsHeap(RandomAccessIterator begin, RandomAccessIterator end,

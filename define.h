@@ -13,21 +13,22 @@
 
 #if PHI__debug_flag
 	#include <iostream>
+	#include <cstdio>
 	#include <assert.h>
 
 	#define PHI__debug
 	#define PHI__debug_if(x) if (x)
 
 	#define PHI__print_pos                                                     \
-		{ std::cout << __FILE__ << " : " << __LINE__ << std::endl; }
+		{ std::cout << "{ " << __FILE__ << ":" << __LINE__ << " }\n"; }
 
 	#define PHI__print_value(value)                                            \
-		{ std::cout << #value << ": " << value << "\n"; }
+		{ std::cout << "{ " << #value << ": " << value << " }\n"; }
 
 	#define PHI__interrupt                                                     \
 		{                                                                      \
 			PHI__print_pos;                                                    \
-			std::cout << "block: press enter to continue" << std::flush;       \
+			std::cout << "interrupt: press enter to continue";                 \
 			char c___;                                                         \
 			std::cin.getline(&c___, 1);                                        \
 		}
@@ -35,7 +36,7 @@
 	#define PHI__throw__(type, func, desc)                                     \
 		{                                                                      \
 			std::cout << __LINE__ << " " << type << "::" << func << "\n\t"     \
-					  << desc << std::endl;                                    \
+					  << desc << "\n";                                         \
 			assert(false);                                                     \
 		}
 #else
