@@ -49,6 +49,7 @@ void IndexArranger::Add(size_t index) {
 	this->index_.Push(index);
 	LinearInsert(this->index_.first_iterator(), this->index_.null_iterator());
 }
+
 }
 
 #endif

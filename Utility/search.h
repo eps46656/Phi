@@ -7,6 +7,35 @@
 
 namespace phi {
 
+template<typename ForwardIterator, typename F>
+size_t Count(ForwardIterator begin, ForwardIterator end, F&& func) {
+	size_t r(0);
+
+	for (; begin != end; ++begin) {
+		if (func(*begin)) { ++r; }
+	}
+
+	return r;
+}
+
+template<typename ForwardIterator, typename Target,
+		 typename EqualComparer = DefaultEqualComparer>
+size_t CountEqual(ForwardIterator begin, ForwardIterator end,
+				  const Target& target,
+				  const EqualComparer& eq_cmper = EqualComparer()) {
+	size_t r(0);
+
+	for (; begin != end; ++begin) {
+		if (eq_cmper.eq(*begin, target)) { ++r; }
+	}
+
+	return r;
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
 template<typename ForwardIterator, typename Index,
 		 typename EqualComparer = DefaultEqualComparer>
 ForwardIterator LinearSearch(ForwardIterator begin, ForwardIterator end,

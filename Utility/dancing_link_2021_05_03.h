@@ -5,6 +5,7 @@
 #include "../Container/Vector.h"
 #include "../Container/Set.h"
 #include "../Container/Pool.h"
+#include <iostream>
 
 #define PHI__throw__local(desc) PHI__throw(DancingLink, __func__, desc);
 
@@ -100,10 +101,20 @@ private:
 
 	void EnPool_(Node* node);
 
+	void PopState_(Node* col);
+
+	void ChoosePop_(Node* node, size_t& nec_cst_num);
+	void ChooseCover_(Node* node);
+	void ChooseUnCover_(Node* node);
+
+	void ChooseCoverD_(Node* node);
+	void ChooseUnCoverD_(Node* node);
+
+	void Optimize_();
+
 	template<typename Receiver>
-	bool Solve_(cntr::Vector<size_t>& dst,
-				cntr::Vector<pair<size_t, Node*>>& nec_cst_num,
-				Receiver& receiver);
+	bool Solve_(cntr::Vector<size_t>& dst, Node* col_header_i,
+				size_t nec_cst_num, Receiver& receiver);
 };
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -312,91 +323,138 @@ void DancingLink::Release() {
 
 #///////////////////////////////////////////////////////////////////////////////
 
+void DancingLink::Optimize_() {
+	cntr::Vector<Node*> ccc;
+
+	Node* row_header(this->root_->r);
+
+	for (; row_header != this->root_; ++row_header) {}
+}
+
+void DancingLink::EnPool_(Node* node) {
+	node->Pop();
+	this->pool_.Push(node);
+}
+
+void DancingLink::PopState_(Node* col) {
+	col = col->col_header;
+	while (!col->is_sole_lr()) { this->EnPool_(col->r); }
+	this->EnPool_(col);
+}
+
+void DancingLink::ChoosePop_(Node* node, size_t& nec_cst_num) {
+	node = node->col_header;
+
+	while (!node->is_sole_lr()) {
+		Node* row(node->r);
+		if (row->row_index < this->nec_cst_num_) { --nec_cst_num; }
+		while (row->d != row->row_header) { PopState_(row->d); }
+		while (row->u != row->row_header) { PopState_(row->u); }
+		this->EnPool_(row->u);
+		this->EnPool_(row);
+	}
+
+	this->EnPool_(node);
+}
+/*
+void DancingLink::ChooseCoverD_(Node* node, size_t& nec_cst_num) {
+	size_t nec_cst_num(0);
+
+	node = node->col_header;
+
+	for (Node* row(node->r); row != node; row = row->r) {
+		if (row->row_index < this->nec_cst_num_) { --nec_cst_num; }
+		Node* i(row->d);
+
+		for (; !i->is_row_header(); i = i->d) {
+			for (Node* j(i->r); j != i; j = j->r) { j->CoverUD(); }
+		}
+
+		i->CoverLR();
+	}
+}*/
+
 template<typename Receiver> void DancingLink::Solve(Receiver& receiver) {
 	this->Build();
 
+	size_t nec_cst_num(this->nec_cst_num_);
+
 	cntr::Vector<size_t> dst;
 
-	cntr::Vector<pair<size_t, Node*>> nec_cst_num;
-	nec_cst_num.Reserve(this->nec_cst_num_);
+	/*cntr::Vector<Node*> covered_col;
 
-	for (Node* row_header(this->root_->r);
-		 row_header->row_index < this->nec_cst_num_;
-		 row_header = row_header->r) {
-		nec_cst_num.Push(0, row_header);
+	{
+		cntr::Vector<Node*> vvv;
+		cntr::Set<size_t> sss;
 
-		for (Node* i(row_header->d); i != row_header; i = i->d) {
-			++nec_cst_num.back().first;
+		Node* row_header(this->root_->r);
+
+		for (; row_header != this->root_; ++row_header) {
+			Node* i(row_header->d);
+
+			for (; i != row_header; i = i->d) {
+				vvv.Push(i);
+
+				for (Node* j(i->col_header->r);j!=i->col_header;j = j->r){
+
+				}
+			}
+
+			if (vvv.size() == 0) { return; }
+
+			if (vvv.size() == 1) { this->ChoosePop_(ccc[0], nec_cst_num); }
 		}
-	}
+	}*/
 
-	Solve_(dst, nec_cst_num, receiver);
+	Solve_(dst, this->root_->d, nec_cst_num, receiver);
 }
 
 template<typename Receiver>
-bool DancingLink::Solve_(cntr::Vector<size_t>& dst,
-						 cntr::Vector<pair<size_t, Node*>>& nec_cst_num,
-						 Receiver& receiver) {
-	auto target_iter(Min(nec_cst_num.first_iterator(),
-						 nec_cst_num.null_iterator(),
-						 DefaultPairFullComparer()));
+bool DancingLink::Solve_(cntr::Vector<size_t>& dst, Node* col_header_i,
+						 size_t nec_cst_num, Receiver& receiver) {
+	/*if (4 <= dst.size()) {
+		PHI__print_value(dst[dst.size() - 4]);
+		PHI__print_value(dst[dst.size() - 3]);
+		PHI__print_value(dst[dst.size() - 2]);
+		PHI__print_value(dst[dst.size() - 1]);
+		PHI__interrupt;
+	}*/
 
-	if (target_iter->first == 0) { return true; }
-
-	if (this->state_num_ < target_iter->first) {
+	if (nec_cst_num == 0) {
 		return receiver(dst.first_const_iterator(), dst.null_const_iterator());
 	}
 
-	for (Node* target_i(target_iter->second->d);
-		 target_i != target_iter->second; target_i = target_i->d) {
-		Node* target(target_i->col_header);
+	for (; col_header_i != this->root_; col_header_i = col_header_i->d) {
+		bool determine_fail(false);
 
-		for (Node* row(target->r); row->row_index < this->nec_cst_num_;
-			 row = row->r) {
-			if (this->state_num_ < nec_cst_num[row->row_index].first) {
-				PHI__interrupt;
-			}
+		for (Node* row(col_header_i->r); row != col_header_i; row = row->r) {
+			if (row->row_index < this->nec_cst_num_) { --nec_cst_num; }
+			Node* i(row->d);
 
-			nec_cst_num[row->row_index].first += this->state_num_ * 4;
-		}
-
-		size_t covered_state_num(0);
-
-		for (Node* row(target->r); row != target; row = row->r) {
-			for (Node* i(row->d); i != row; i = i->d) {
-				++covered_state_num;
-				if (i->is_row_header()) { continue; }
-
+			for (; !i->is_row_header(); i = i->d) {
 				for (Node* j(i->r); j != i; j = j->r) {
-					if (j->row_index < this->nec_cst_num_) {
-						--nec_cst_num[j->row_index].first;
-					}
-
+					if (j->u == j->d) { determine_fail = true; }
 					j->CoverUD();
 				}
 			}
+
+			i->CoverLR();
 		}
 
-		dst.Push(target_i->col_index);
-		bool solve_continue(Solve_(dst, nec_cst_num, receiver));
+		dst.Push(col_header_i->col_index);
+		bool solve_continue(determine_fail ? true
+										   : Solve_(dst, col_header_i->d,
+													nec_cst_num, receiver));
 		dst.Pop();
 
-		for (Node* row(target->l); row != target; row = row->l) {
-			for (Node* i(row->u); i != row; i = i->u) {
-				if (i->is_row_header()) { continue; }
-				for (Node* j(i->l); j != i; j = j->l) {
-					if (j->row_index < this->nec_cst_num_) {
-						++nec_cst_num[j->row_index].first;
-					}
+		for (Node* row(col_header_i->l); row != col_header_i; row = row->l) {
+			if (row->row_index < this->nec_cst_num_) { ++nec_cst_num; }
+			Node* i(row->row_header);
+			i->UnCoverLR();
 
-					j->UnCoverUD();
-				}
+			while ((i = i->u) != row) {
+				for (Node* j(i->l); j != i; j = j->l) { j->UnCoverUD(); }
 			}
-		}
-
-		for (Node* row(target->r); row->row_index < this->nec_cst_num_;
-			 row = row->r) {
-			nec_cst_num[row->row_index].first -= this->state_num_ * 4;
 		}
 
 		if (!solve_continue) { return false; }
@@ -407,7 +465,6 @@ bool DancingLink::Solve_(cntr::Vector<size_t>& dst,
 
 #///////////////////////////////////////////////////////////////////////////////
 
-/*
 void DancingLink::Print() const { Print(this->root_); }
 
 void DancingLink::Print(Node* root) {
@@ -439,7 +496,7 @@ void DancingLink::Print(Node* root) {
 
 		::printf("\n");
 	}
-}*/
+}
 
 }
 

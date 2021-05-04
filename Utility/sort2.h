@@ -17,38 +17,22 @@ Returns the number of iterators in [begin, end)
 */
 
 template<typename Iterator>
-auto Distance(iterator::Type::Forward iterator_type, Iterator begin,
-			  Iterator end) {
+typename iterator::trait<Iterator>::Diff
+Distance(iterator::Type::Forward iterator_type, Iterator begin, Iterator end) {
 	typename iterator::trait<Iterator>::Diff r(0);
 	for (; begin != end; ++begin) { ++r; }
 	return r;
 }
 
 template<typename Iterator>
-auto Distance(iterator::Type::RandomAccess iterator_type, Iterator begin,
-			  Iterator end) {
+typename iterator::trait<Iterator>::Diff
+Distance(iterator::Type::RandomAccess iterator_type, Iterator begin,
+		 Iterator end) {
 	return end - begin;
 }
 
 template<typename Iterator> auto Distance(Iterator begin, Iterator end) {
 	return Distance(begin, end, typename iterator::trait<Iterator>::Type());
-}
-
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-
-template<typename ForwardIterator, typename Target,
-		 typename EqualComparer = DefaultEqualComparer>
-size_t Count(ForwardIterator begin, ForwardIterator end, const Target& target,
-			 const EqualComparer& eq_cmper = EqualComparer()) {
-	size_t r(0);
-
-	for (; begin != end; ++begin) {
-		if (eq_cmper.eq(*begin, target)) { ++r; }
-	}
-
-	return r;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -646,9 +630,7 @@ void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff limit,
 		}
 
 		if (limit == 0) {
-			RandomAccessIterator p(end - Diff(PHI__insertion_sort_threshold));
-			HeapSort(begin, p, lt_cmper);
-			UnrestrictedInsertionSort(p, end, lt_cmper);
+			HeapSort(begin, end, lt_cmper);
 			return;
 		}
 

@@ -82,7 +82,7 @@ bool IntegerCombination::GenerateAll_(size_t data_i, size_t* data, size_t lower,
 }
 
 bool IntegerCombination::Next(size_t n, size_t k, size_t* data) {
-	Next(n, k, data, k - 1);
+	return Next(n, k, data, k - 1);
 }
 
 bool IntegerCombination::Next(size_t n, size_t k, size_t* data, size_t index) {

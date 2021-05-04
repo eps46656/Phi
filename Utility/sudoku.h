@@ -37,44 +37,33 @@ public:
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-	static size_t GetIndex(size_t col_index, size_t row_index);
-	static pair<size_t, size_t> GetColRowIndex(size_t index);
-	static size_t GetBoxIndex(size_t index);
 	static size_t GetBoxIndex(size_t col_index, size_t row_index);
 
-	static const size_t* GetSameBoxIndex(size_t b_col_index,
-										 size_t b_row_index);
-	static const size_t* GetSameBoxIndex(size_t index);
+	static const size_t* GetSameColIndexs(size_t col_index);
+	static const size_t* GetSameRowIndexs(size_t col_index);
 
-	static const size_t* GetSameColIndex(size_t col_index);
-	static const size_t* GetSameRowIndex(size_t col_index);
+	static const size_t* GetSameBoxIndexs(size_t box_col_index,
+										  size_t box_row_index);
 
-	static char get_char(size_t value);
+	static void Eliminate(size_t& certain_num, cntr::Vector<size_t>& queue,
+						  Block* blocks);
+	static void Eliminate(cntr::Vector<size_t>& queue, Block* blocks,
+						  const size_t* indexs, size_t except_index,
+						  size_t num);
 
-	static size_t Eliminate(cntr::Vector<size_t>& queue, Block* block,
-							size_t index);
-	static size_t Eliminate(Block* blocks);
-
-	static void PointSSS(size_t& certain_num, cntr::Vector<size_t>& queue,
-						 Block* block);
-	static void LineSSS(cntr::Vector<size_t>& queue, Block* block);
-	static void MonoSSS(cntr::Vector<size_t>& queue, Block* block);
-	static void MonoSSS(cntr::Vector<size_t>& queue, Block* block,
-						const size_t* index);
-
-	static void EnSet(cntr::Set<size_t>& set, const bool* candidate);
+	static void Check(const Block* blocks, const size_t* indexs);
 
 #///////////////////////////////////////////////////////////////////////////////
 
 	size_t certain_num() const;
+
+	const Block* blocks() const;
 
 	void set_value(size_t col_index, size_t row_index, size_t value);
 
 #///////////////////////////////////////////////////////////////////////////////
 
 	Sudoku();
-
-	void Print() const;
 
 	void Solve();
 
@@ -145,35 +134,45 @@ template<size_t rank> Sudoku<rank>::Block::Block(): value(size - 2 + size) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t rank>
-size_t Sudoku<rank>::GetIndex(size_t col_index, size_t row_index) {
-	return size * col_index + row_index;
-}
-
-template<size_t rank>
-pair<size_t, size_t> Sudoku<rank>::GetColRowIndex(size_t index) {
-	size_t col_index(index / size);
-	return pair<size_t, size_t>(col_index, index - size * col_index);
-}
-
-template<size_t rank> size_t Sudoku<rank>::GetBoxIndex(size_t index) {
-	size_t col_index(index / size);
-	return col_index / rank * rank + (index - size * col_index) / rank;
-}
-
-template<size_t rank>
 size_t Sudoku<rank>::GetBoxIndex(size_t col_index, size_t row_index) {
 	return col_index / rank * rank + row_index / rank;
 }
 
 template<size_t rank>
-const size_t* Sudoku<rank>::GetSameBoxIndex(size_t b_index) {
-	size_t b_col_index(b_index / rank);
-	return GetSameBoxIndex(b_col_index, b_index - rank * b_col_index);
+const size_t* Sudoku<rank>::GetSameColIndexs(size_t col_index) {
+	static bool initialized(false);
+	static size_t value[size][size];
+
+	if (!initialized) {
+		for (size_t i(0); i != size; ++i) {
+			for (size_t j(0); j != size; ++j) { value[i][j] = size * i + j; }
+		}
+
+		initialized = true;
+	}
+
+	return value[col_index];
 }
 
 template<size_t rank>
-const size_t* Sudoku<rank>::GetSameBoxIndex(size_t b_col_index,
-											size_t b_row_index) {
+const size_t* Sudoku<rank>::GetSameRowIndexs(size_t row_index) {
+	static bool initialized(false);
+	static size_t value[size][size];
+
+	if (!initialized) {
+		for (size_t i(0); i != size; ++i) {
+			for (size_t j(0); j != size; ++j) { value[j][i] = size * i + j; }
+		}
+
+		initialized = true;
+	}
+
+	return value[row_index];
+}
+
+template<size_t rank>
+const size_t* Sudoku<rank>::GetSameBoxIndexs(size_t box_col_index,
+											 size_t box_row_index) {
 	static bool initialized(false);
 	static size_t value[rank][rank][size];
 
@@ -194,315 +193,44 @@ const size_t* Sudoku<rank>::GetSameBoxIndex(size_t b_col_index,
 		initialized = true;
 	}
 
-	return value[b_col_index][b_row_index];
-}
-
-template<size_t rank>
-const size_t* Sudoku<rank>::GetSameColIndex(size_t col_index) {
-	static bool initialized(false);
-	static size_t value[size][size];
-
-	if (!initialized) {
-		for (size_t i(0); i != size; ++i) {
-			for (size_t j(0); j != size; ++j) { value[i][j] = GetIndex(i, j); }
-		}
-
-		initialized = true;
-	}
-
-	return value[col_index];
-}
-
-template<size_t rank>
-const size_t* Sudoku<rank>::GetSameRowIndex(size_t row_index) {
-	static bool initialized(false);
-	static size_t value[size][size];
-
-	if (!initialized) {
-		for (size_t i(0); i != size; ++i) {
-			for (size_t j(0); j != size; ++j) { value[j][i] = GetIndex(i, j); }
-		}
-
-		initialized = true;
-	}
-
-	return value[row_index];
-}
-
-template<size_t rank> char Sudoku<rank>::get_char(size_t value) {
-	if (value < 10) { return '0' + value; }
-	if (value < 10 + 26) { return 'A' + value; }
-	return ' ';
+	return value[box_col_index][box_row_index];
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t rank>
-void Sudoku<rank>::PointSSS(size_t& certain_num, cntr::Vector<size_t>& queue,
-							Block* blocks) {
+void Sudoku<rank>::Eliminate(size_t& certain_num, cntr::Vector<size_t>& queue,
+							 Block* blocks) {
 	while (!queue.empty()) {
 		size_t index(queue.back());
 		queue.Pop();
 		++certain_num;
 
 		size_t col_index(index / size);
-		size_t row_index(index - col_index * size);
+		size_t row_index(index - size * col_index);
 
-		size_t value(blocks[index].value);
+		size_t box_col_index(col_index / rank);
+		size_t box_row_index(row_index / rank);
 
-		// same col
-		for (size_t row_index_a(0); row_index_a != size; ++row_index_a) {
-			if (row_index_a == row_index) { continue; }
-			size_t index_a(GetIndex(col_index, row_index_a));
-			if (blocks[index_a].set_candidate_false(value)) {
-				queue.Push(index_a);
-			}
-		}
+		size_t num(blocks[index].value);
 
-		// same row
-		for (size_t col_index_a(0); col_index_a != size; ++col_index_a) {
-			if (col_index_a == col_index) { continue; }
-			size_t index_a(size * col_index_a + row_index);
-			if (blocks[index_a].set_candidate_false(value)) {
-				queue.Push(index_a);
-			}
-		}
-
-		const size_t* same_box_index(
-			GetSameBoxIndex(col_index / rank, row_index / rank));
-
-		// same box
-		for (size_t i(0); i != size; ++i) {
-			size_t index_a(same_box_index[i]);
-			if (index_a == index) { continue; }
-			if (blocks[index_a].set_candidate_false(value)) {
-				queue.Push(index_a);
-			}
-		}
-
-		if (queue.empty()) { certain_num += LineSSS(queue, blocks); }
+		Eliminate(queue, blocks, GetSameColIndexs(col_index), index, num);
+		Eliminate(queue, blocks, GetSameRowIndexs(row_index), index, num);
+		Eliminate(queue, blocks, GetSameBoxIndexs(box_col_index, box_row_index),
+				  index, num);
 	}
 }
 
 template<size_t rank>
-void Sudoku<rank>::LineSSS(cntr::Vector<size_t>& queue, Block* blocks) {
-	for (size_t b_index(0); b_index != size; ++b_index) {
-		size_t b_col_index(b_index / rank);
-		size_t b_row_index(b_index - rank * b_col_index);
-
-		// PHI__print_value(b_index);
-		// PHI__interrupt;
-
-		const size_t* same_box_index(GetSameBoxIndex(b_col_index, b_row_index));
-
-		bool set;
-		size_t col_index;
-		size_t row_index;
-
-		for (size_t num(0); num != size; ++num) {
-			set = false;
-
-			for (size_t i(0); i != size; ++i) {
-				if (blocks[same_box_index[i]].value == num) { goto next_num; }
-				if (!blocks[same_box_index[i]].candidate[num]) { continue; }
-
-				pair<size_t, size_t> col_row(GetColRowIndex(same_box_index[i]));
-
-				if (set) {
-					if (col_index != col_row.first) { col_index = size; }
-					if (row_index != col_row.second) { row_index = size; }
-
-					if (col_index == size && row_index == size) {
-						goto next_num;
-					}
-				} else {
-					col_index = col_row.first;
-					row_index = col_row.second;
-					set = true;
-				}
-			}
-
-			const size_t* index_a(col_index == size
-									  ? GetSameRowIndex(row_index)
-									  : GetSameColIndex(col_index));
-
-			for (size_t i(0); i != size; ++i) {
-				if (GetBoxIndex(index_a[i]) == b_index) { continue; }
-
-				if (blocks[index_a[i]].set_candidate_false(num)) {
-					queue.Push(index_a[i]);
-				}
-			}
-
-		next_num:;
-		}
-	}
-}
-
-template<size_t rank>
-void Sudoku<rank>::MonoSSS(cntr::Vector<size_t>& queue, Block* blocks) {
-	// same col
-	for (size_t col_index(0); col_index != size; ++col_index) {
-		MonoSSS(queue, blocks, GetSameColIndex(col_index));
-		if (certain_num == size_sq) { return; }
-	}
-
-	for (size_t row_index(0); row_index != size; ++row_index) {
-		MonoSSS(queue, blocks, GetSameRowIndex(row_index));
-		if (certain_num == size_sq) { return; }
-	}
-
-	for (size_t box_index(0); box_index != size; ++box_index) {
-		MonoSSS(queue, blocks, GetSameBoxIndex(box_index));
-		if (certain_num == size_sq) { return; }
-	}
-}
-
-template<size_t rank>
-void Sudoku<rank>::MonoSSS(cntr::Vector<size_t>& queue, Block* blocks,
-						   const size_t* indexs) {
-	size_t candidate_num[size] = { 0 };
-	size_t uncertain_num(0);
-
+void Sudoku<rank>::Eliminate(cntr::Vector<size_t>& queue, Block* blocks,
+							 const size_t* indexs, size_t except_index,
+							 size_t num) {
 	for (size_t i(0); i != size; ++i) {
-		if ((candidate_num[i] = indexs[i].candidate_num()) != 1) {
-			++uncertain_num;
+		if (indexs[i] != except_index &&
+			blocks[indexs[i]].set_candidate_false(num)) {
+			queue.Push(indexs[i]);
 		}
 	}
-
-	if (uncertain_num == 0) { return; }
-
-	if (uncertain_num == 1) {
-		PHI__print_value("error");
-		PHI__interrupt;
-	}
-
-	for (size_t num(2); num != uncertain_num; ++num) {
-		size_t indexs_a[size];
-		size_t indexs_a_size(0);
-
-		for (size_t i(0); i != size; ++i) {
-			if (1 < candidate_num[i] && candidate_num[i] <= num) {
-				indexs_a[indexs_a_size] = i;
-				++indexs_a_size;
-			}
-		}
-
-		if (indexs_a_size < num) { continue; }
-
-		cntr::Set<size_t> candidate_set;
-
-		for (IntegerCombination c(indexs_a_size, num); !c.is_end();
-			 candidate_set.Clear()) {
-			for (size_t i(0); i != indexs_a_size; ++i) {
-				EnSet(candidate_set, blocks[indexs[indexs_a[c[i]]]].cnadidate);
-
-				if (num < candidate_set.size()) {
-					c.next(i);
-					goto next_combination;
-				}
-			}
-
-			size_t i(0);
-			size_t j(0);
-
-			for (; i != size; ++i) {
-				if (j != indexs_a_size && i == indexs_a[c[j]]) {
-					++j;
-					continue;
-				}
-
-				{
-					auto candidate_set_iter(candidate_set.first_iterator());
-					auto candidate_set_end(candidate_set.null_iterator());
-
-					for (; candidate_set_iter != candidate_set_end;
-						 ++candidate_set_iter) {
-						if (blocks[indexs[indexs_a[c[i]]]].set_candidate_false(
-								*candidate_set_iter)) {
-							queue.Push(indexs[indexs_a[c[i]]]);
-						}
-					}
-				}
-			}
-
-			c.next();
-
-		next_combination:;
-		}
-	}
-}
-
-template<size_t rank>
-void Sudoku<rank>::EnSet(cntr::Set<size_t>& set, const bool* candidate) {
-	for (size_t i(0); i != size; ++i) {
-		if (candidate[i]) { set.Insert(i); }
-	}
-}
-
-/*
-template<size_t rank>
-size_t Sudoku<rank>::Eliminate(cntr::Vector<size_t>& quene, Block* blocks,
-							   size_t index) {
-	size_t certain_num(0);
-
-	for (;;) {
-		size_t col_index(index / size);
-		size_t row_index(index - col_index * size);
-
-		size_t value(blocks[index].value);
-
-		// same col
-		for (size_t row_index_a(0); row_index_a != size; ++row_index_a) {
-			if (row_index_a == row_index) { continue; }
-			size_t index_a(GetIndex(col_index, row_index_a));
-			if (blocks[index_a].set_candidate_false(value)) {
-				judge_queue[judge_queue_size] = index_a;
-				++judge_queue_size;
-				++certain_num;
-			}
-		}
-
-		// same row
-		for (size_t col_index_a(0); col_index_a != size; ++col_index_a) {
-			if (col_index_a == col_index) { continue; }
-			size_t index_a(size * col_index_a + row_index);
-			if (blocks[index_a].set_candidate_false(value)) {
-				judge_queue[judge_queue_size] = index_a;
-				++judge_queue_size;
-				++certain_num;
-			}
-		}
-
-		const size_t* same_box_index(
-			GetSameBoxIndex(col_index / rank, row_index / rank));
-
-		// same box
-		for (size_t i(0); i != size; ++i) {
-			size_t index_a(same_box_index[i]);
-			if (index_a == index) { continue; }
-			if (blocks[index_a].set_candidate_false(value)) {
-				judge_queue[judge_queue_size] = index_a;
-				++judge_queue_size;
-				++certain_num;
-			}
-		}
-
-		if (judge_queue_size == 0) { break; }
-		index = judge_queue[--judge_queue_size];
-	}
-
-	return certain_num;
-}*/
-
-template<size_t rank> size_t Sudoku<rank>::Eliminate(Block* blocks) {
-	size_t certain_num(0);
-
-	for (size_t i(0); i != size * size; ++i) {
-		if (blocks[i].is_certain()) { certain_num += Eliminate(blocks, i); }
-	}
-
-	return certain_num;
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -512,8 +240,13 @@ template<size_t rank> size_t Sudoku<rank>::certain_num() const {
 }
 
 template<size_t rank>
+const typename Sudoku<rank>::Block* Sudoku<rank>::blocks() const {
+	return this->blocks_;
+}
+
+template<size_t rank>
 void Sudoku<rank>::set_value(size_t col_index, size_t row_index, size_t value) {
-	size_t index(GetIndex(col_index, row_index));
+	size_t index(size * col_index + row_index);
 	if (this->blocks_[index].is_certain()) { return; }
 	this->blocks_[index].set_value(value);
 
@@ -521,7 +254,7 @@ void Sudoku<rank>::set_value(size_t col_index, size_t row_index, size_t value) {
 	queue.Reserve(size_sq);
 	queue.Push(index);
 
-	this->certain_num_ += CertainSSS(queue, this->blocks_);
+	Eliminate(this->certain_num_, queue, this->blocks_);
 }
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -530,35 +263,83 @@ template<size_t rank> Sudoku<rank>::Sudoku(): certain_num_(0) {}
 
 #///////////////////////////////////////////////////////////////////////////////
 
-template<size_t rank> void Sudoku<rank>::Print() const {
-	for (size_t i(0); i != size; ++i) {
-		for (size_t j(0); j != size; ++j) {
-			if (this->blocks_[size * i + j].is_certain()) {
-				std::cout << get_char(this->blocks_[size * i + j].value + 1)
-						  << ' ';
-			} else {
-				std::cout << "  ";
-			}
-		}
+/*
+void PrintState(size_t state_id) {
+	size_t size(9);
 
-		std::cout << '\n';
-	}
+	size_t index(state_id / size);
+	size_t num(state_id - size * index);
+
+	size_t col_index(index / size);
+	size_t row_index(index - size * col_index);
+
+	std::cout << "fill " << num << " at (" << col_index << ", " << row_index
+			  << ")\n";
 }
+
+void PrintCst(size_t cst) {
+	size_t size(9);
+
+	std::cout << "\t";
+
+	if (cst < size * size) {
+		size_t index(cst / size);
+		size_t col_index(index / size);
+		size_t row_index(index - size * col_index);
+		std::cout << "(" << col_index << ", " << row_index << ") used\n";
+		return;
+	}
+
+	if ((cst -= size * size) < size * size) {
+		size_t col_index(cst / size);
+		size_t num(cst - size * col_index);
+		std::cout << "col " << col_index << " used " << num << "\n";
+		return;
+	}
+
+	if ((cst -= size * size) < size * size) {
+		size_t row_index(cst / size);
+		size_t num(cst - size * row_index);
+		std::cout << "row " << row_index << " used " << num << "\n";
+		return;
+	}
+
+	if ((cst -= size * size) < size * size) {
+		size_t box_index(cst / size);
+		size_t num(cst - size * box_index);
+		std::cout << "box " << box_index << " used " << num << "\n";
+		return;
+	}
+
+	std::cout << "error\n";
+}*/
 
 template<size_t rank> void Sudoku<rank>::Solve() {
 	if (this->certain_num_ == size_sq) { return; }
 
-	// state index:
-	//     size * index * num : num at index
-	// cst index:
-	//                       size * index            : index used
-	//         [0              , size * size)
-	//     size * size     + size * col + num        : num in col
-	//         [size * size    , size * size * 2)
-	//     size * size * 2 + size * row + num        : num in row
-	//         [size * size * 2, size * size * 3)
-	//     size * size * 3 + size * box + num        : num in box
-	//         [size * size * 3, size * size * 4)
+	// state id:
+	//     fill nume at index:
+	//         id expression: size * index + num
+	//         range        : [0, size * size)
+	//
+	// constraint id:
+	//     cell has num:
+	//         id expression: index
+	//         range        : [0, size * size)
+	//
+	//     col has num:
+	//         id expression: size * size + size * col_index + num
+	//         range        : [size * size, size * size * 2)
+	//
+	//     row has num:
+	//         id expression: size * size * 2 + size * row_index + num
+	//         range        : [size * size * 2, size * size * 3)
+	//
+	//     box has num:
+	//         id expression: size* size * 3 + size* box_index + num
+	//         range        : [size * size * 3, size * size * 4)
+	//
+	// size * size constraints totally
 
 	cntr::Vector<pair<size_t, size_t>> hot;
 	IndexArranger state_mapper;
@@ -570,12 +351,12 @@ template<size_t rank> void Sudoku<rank>::Solve() {
 		for (size_t num(0); num != size; ++num) {
 			if (!this->blocks_[index].candidate[num]) { continue; }
 
-			size_t state_id(size * index + num);
-
 			size_t col_index(index / size);
 			size_t row_index(index - size * col_index);
 
-			size_t used_cst(size * index);
+			size_t state_id(size * index + num);
+
+			size_t used_cst(index);
 			size_t col_cst(size * size + size * col_index + num);
 			size_t row_cst(size * size * 2 + size * row_index + num);
 			size_t box_cst(size * size * 3 +
@@ -597,8 +378,8 @@ template<size_t rank> void Sudoku<rank>::Solve() {
 	DancingLink dlx(state_mapper.size(), cst_mapper.size(), 0);
 
 	for (size_t i(0); i != hot.size(); ++i) {
-		dlx.AddHot(state_mapper.forward(hot[i].first),
-				   cst_mapper.forward(hot[i].second));
+		size_t a(state_mapper.forward(hot[i].first));
+		dlx.AddHot(a, cst_mapper.forward(hot[i].second));
 	}
 
 	Receiver receiver;
@@ -617,7 +398,35 @@ template<size_t rank> void Sudoku<rank>::Solve() {
 	}
 
 	this->certain_num_ = size_sq;
+
+	for (size_t i(0); i != size; ++i) {
+		Check(this->blocks_, GetSameColIndexs(i));
+		Check(this->blocks_, GetSameRowIndexs(i));
+		Check(this->blocks_, GetSameBoxIndexs(i / rank, i - i / rank * rank));
+	}
 }
+
+template<size_t rank>
+void Sudoku<rank>::Check(const Block* blocks, const size_t* indexs) {
+	bool ok[size] = { false };
+
+	Assign<size>(ok, false);
+
+	for (size_t i(0); i != size; ++i) {
+		if (!blocks[indexs[i]].is_certain()) {
+			PHI__interrupt;
+			continue;
+		}
+
+		if (ok[blocks[indexs[i]].value]) {
+			PHI__interrupt;
+			continue;
+		}
+
+		ok[blocks[indexs[i]].value] = true;
+	}
+}
+
 }
 
 #endif

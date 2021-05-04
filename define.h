@@ -13,7 +13,6 @@
 
 #if PHI__debug_flag
 	#include <iostream>
-	#include <cstdio>
 	#include <assert.h>
 
 	#define PHI__debug
@@ -23,7 +22,7 @@
 		{ std::cout << "{ " << __FILE__ << ":" << __LINE__ << " }\n"; }
 
 	#define PHI__print_value(value)                                            \
-		{ std::cout << "{ " << #value << ": " << value << " }\n"; }
+		{ std::cout << "{ " << #value << ": " << (value) << " }\n"; }
 
 	#define PHI__interrupt                                                     \
 		{                                                                      \
@@ -44,6 +43,12 @@
 	#define PHI__debug_if(x) if constexpr (false)
 
 	#define PHI__throw__(type, func, desc) ;
+
+	#define PHI__print_pos
+
+	#define PHI__print_value
+
+	#define PHI__interrupt
 #endif
 
 #define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
