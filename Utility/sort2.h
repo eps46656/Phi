@@ -79,63 +79,6 @@ ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-/*
-Returns pivot_index.
-Partitions [src[lower], src[upper]) into two section [lower, pivot_index) and
-[pivot_index, upper).
-Make [src[lower], src[pivot_index]) <= pivot <= [src[pivot_index], src[upper]).
-Uses lt_cmper to compare two elements. Uses swapper to swap elemenets.
-*/
-
-template<typename Src, typename Pivot,
-		 typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-size_t Partition(size_t lower, size_t upper, Src& src, const Pivot& pivot,
-				 const LessThanComparer& lt_cmper = LessThanComparer(),
-				 const Swapper& swapper = Swapper()) {
-	if (lower == upper) { return lower; }
-
-	size_t a(lower);
-	size_t b(upper - 1);
-
-	while (a != b) {
-		while (!lt_cmper.lt(pivot, src[a])) {
-			if (++a == b) { return lt_cmper.lt(src[a], pivot) ? a + 1 : a; }
-		}
-
-		while (!lt_cmper.lt(src[b], pivot)) {
-			if (a == --b) { return a; }
-		}
-
-		swapper(src[a], src[b]);
-		if (--b < ++a) { return a; }
-	}
-
-	return lt_cmper.lt(src[a], pivot) ? a + 1 : a;
-}
-
-/*
-Returns pivot_index.
-Partitions [src[0], src[size]) into two section [0, pivot_index) and
-[pivot_index, size).
-Make [src[0], src[pivot_index]) <= pivot <= [src[pivot_index], src[size]).
-Uses lt_cmper to compare two elements. Uses swapper to swap elemenets.
-*/
-
-template<typename Src, typename Pivot,
-		 typename LessThanComparer = DefaultLessThanComparer,
-		 typename Swapper = DefaultSwapper>
-pair<size_t, size_t>
-Partition(size_t size, Src& src, const Pivot& pivot,
-		  const LessThanComparer& lt_cmper = LessThanComparer(),
-		  const Swapper& swapper = Swapper()) {
-	return Partition(0, size, src, pivot, lt_cmper, swapper);
-}
-
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-
 template<typename ForwardIterator, typename Pivot,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
@@ -375,13 +318,19 @@ void QuickSort(RandomAccessIterator begin, RandomAccessIterator end,
 			   const Swapper& swapper = Swapper()) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
-	Diff diff(end - begin);
+	for (;;) {
+		Diff diff(end - begin);
 
-	while (Diff(2) < diff) {
-		if (Diff(3) < diff) { swapper(*begin, begin[(diff / 2)]); }
+		if (diff < Diff(3)) {
+			if (diff == Diff(2) && lt_cmper.lt(*(--end), *begin)) {
+				swapper(*begin, *end);
+			}
 
-		RandomAccessIterator begin_next(begin + 1);
-		RandomAccessIterator end_prev(end - 1);
+			return;
+		}
+
+		RandomAccessIterator begin_next(begin + Diff(1));
+		RandomAccessIterator end_prev(end - Diff(1));
 
 		if (lt_cmper.lt(*end_prev, *begin_next)) {
 			swapper(*begin_next, *end_prev);
@@ -393,28 +342,13 @@ void QuickSort(RandomAccessIterator begin, RandomAccessIterator end,
 			swapper(*begin, *end_prev);
 		}
 
-		RandomAccessIterator p(
-			Partition(begin + 2, end_prev, *begin, lt_cmper, swapper));
-		RandomAccessIterator p_prev(p - 1);
+		RandomAccessIterator p(UnrestrictedPartition(
+			begin + Diff(2), end_prev, *begin, lt_cmper, swapper));
+		RandomAccessIterator p_prev(p - Diff(1));
 
 		swapper(*begin, *p_prev);
-
-		Diff a_diff(p_prev - begin);
-		Diff b_diff(end - p);
-
-		if (a_diff < b_diff) {
-			QuickSort(begin, p_prev, lt_cmper, swapper);
-			begin = p;
-			diff = b_diff;
-		} else {
-			QuickSort(p, end, lt_cmper, swapper);
-			end = p_prev;
-			diff = a_diff;
-		}
-	}
-
-	if (diff == Diff(2) && lt_cmper.lt(*(--end), *begin)) {
-		swapper(*begin, *end);
+		QuickSort(p, end, lt_cmper, swapper);
+		end = p_prev;
 	}
 }
 
@@ -449,8 +383,6 @@ void HeapSort(RandomAccessIterator begin, RandomAccessIterator end,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-#define PHI__insertion_sort_threshold (32)
-
 template<typename RandomAccessIterator, typename LessThanComparer,
 		 typename Swapper>
 void IntroSort_(
@@ -459,11 +391,11 @@ void IntroSort_(
 	const LessThanComparer& lt_cmper, const Swapper& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
-	while (depth_limit != 0 && PHI__insertion_sort_threshold <= end - begin) {
+	while (depth_limit != Diff(0) && Diff(8) <= end - begin) {
 		depth_limit /= Diff(2);
 
-		RandomAccessIterator begin_next(begin + 1);
-		RandomAccessIterator end_prev(end - 1);
+		RandomAccessIterator begin_next(begin + Diff(1));
+		RandomAccessIterator end_prev(end - Diff(1));
 
 		if (lt_cmper.lt(*end_prev, *begin_next)) {
 			swapper(*begin_next, *end_prev);
@@ -475,9 +407,9 @@ void IntroSort_(
 			swapper(*begin, *end_prev);
 		}
 
-		RandomAccessIterator p(
-			Partition(begin + 2, end_prev, *begin, lt_cmper, swapper));
-		RandomAccessIterator p_prev(p - 1);
+		RandomAccessIterator p(UnrestrictedPartition(
+			begin + Diff(2), end_prev, *begin, lt_cmper, swapper));
+		RandomAccessIterator p_prev(p - Diff(1));
 
 		swapper(*begin, *p_prev);
 
@@ -497,12 +429,11 @@ void IntroSort(RandomAccessIterator begin, RandomAccessIterator end,
 	IntroSort_(end - begin, begin, end, lt_cmper, swapper);
 }
 
-#undef PHI__insertion_sort_threshold
-
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
+/*
 template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
@@ -533,8 +464,8 @@ void Nth(typename iterator::trait<RandomAccessIterator>::Diff n,
 		}
 
 		RandomAccessIterator p(
-			Partition(begin + 2, end_prev, *begin, lt_cmper, swapper));
-		RandomAccessIterator p_prev(p - 1);
+			Partition(begin + Diff(2), end_prev, *begin, lt_cmper, swapper));
+		RandomAccessIterator p_prev(p - Diff(1));
 
 		swapper(*begin, *p_prev);
 
@@ -542,7 +473,7 @@ void Nth(typename iterator::trait<RandomAccessIterator>::Diff n,
 		Diff b_diff(end - p);
 
 		if (a_diff < n) {
-			n -= a_diff + 1;
+			n -= a_diff + Diff(1);
 			begin = p;
 			diff = b_diff;
 			continue;
@@ -557,6 +488,7 @@ void Nth(typename iterator::trait<RandomAccessIterator>::Diff n,
 		if (a_diff == n) { return; }
 	}
 }
+*/
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -566,7 +498,7 @@ void Nth(typename iterator::trait<RandomAccessIterator>::Diff n,
 
 template<typename RandomAccessIterator, typename LessThanComparer,
 		 typename Swapper>
-void Sort_a_(typename iterator::trait<RandomAccessIterator>::Diff limit,
+void Sort_a_(typename iterator::trait<RandomAccessIterator>::Diff depth_limit,
 			 RandomAccessIterator begin, RandomAccessIterator end,
 			 const LessThanComparer& lt_cmper, const Swapper& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
@@ -578,21 +510,15 @@ void Sort_a_(typename iterator::trait<RandomAccessIterator>::Diff limit,
 		return;
 	}
 
-	if (limit == 0) {
-		swapper(*begin, *Min(begin, end, lt_cmper));
-		++begin;
-		RandomAccessIterator p(end - Diff(PHI__insertion_sort_threshold));
-		HeapSort(begin, p, lt_cmper);
-		UnrestrictedInsertionSort(p, end, lt_cmper);
+	if (depth_limit == Diff(0)) {
+		HeapSort(begin, end, lt_cmper);
 		return;
 	}
 
-	limit /= Diff(2);
+	depth_limit /= Diff(2);
 
-	RandomAccessIterator begin_next(begin);
-	++begin_next;
-	RandomAccessIterator end_prev(end);
-	--end_prev;
+	RandomAccessIterator begin_next(begin + Diff(1));
+	RandomAccessIterator end_prev(end - Diff(1));
 
 	if (lt_cmper.lt(*end_prev, *begin_next)) {
 		swapper(*begin_next, *end_prev);
@@ -606,17 +532,16 @@ void Sort_a_(typename iterator::trait<RandomAccessIterator>::Diff limit,
 
 	RandomAccessIterator p(UnrestrictedPartition(begin + Diff(2), end_prev,
 												 *begin, lt_cmper, swapper));
-	RandomAccessIterator p_prev(p);
-	--p_prev;
+	RandomAccessIterator p_prev(p - Diff(1));
 
 	swapper(*begin, *p_prev);
-	Sort_a_(limit, begin, p_prev, lt_cmper, swapper);
-	Sort_b_(limit, p, end, lt_cmper, swapper);
+	Sort_a_(depth_limit, begin, p_prev, lt_cmper, swapper);
+	Sort_b_(depth_limit, p, end, lt_cmper, swapper);
 }
 
 template<typename RandomAccessIterator, typename LessThanComparer,
 		 typename Swapper>
-void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff limit,
+void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff depth_limit,
 			 RandomAccessIterator begin, RandomAccessIterator end,
 			 const LessThanComparer& lt_cmper, const Swapper& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
@@ -629,17 +554,15 @@ void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff limit,
 			return;
 		}
 
-		if (limit == 0) {
+		if (depth_limit == Diff(0)) {
 			HeapSort(begin, end, lt_cmper);
 			return;
 		}
 
-		limit /= Diff(2);
+		depth_limit /= Diff(2);
 
-		RandomAccessIterator begin_next(begin);
-		++begin_next;
-		RandomAccessIterator end_prev(end);
-		--end_prev;
+		RandomAccessIterator begin_next(begin + Diff(1));
+		RandomAccessIterator end_prev(end - Diff(1));
 
 		if (lt_cmper.lt(*end_prev, *begin_next)) {
 			swapper(*begin_next, *end_prev);
@@ -653,11 +576,10 @@ void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff limit,
 
 		RandomAccessIterator p(UnrestrictedPartition(
 			begin + Diff(2), end_prev, *begin, lt_cmper, swapper));
-		RandomAccessIterator p_prev(p);
-		--p_prev;
+		RandomAccessIterator p_prev(p - Diff(1));
 
 		swapper(*begin, *p_prev);
-		Sort_b_(limit, begin, p_prev, lt_cmper, swapper);
+		Sort_b_(depth_limit, begin, p_prev, lt_cmper, swapper);
 		begin = p;
 	}
 }

@@ -5,7 +5,7 @@
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-#define PHI__debug_flag true
+#define PHI__debug_flag false
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -54,9 +54,14 @@
 #define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
 #define PHI__throw(type, func, desc) PHI__throw_(type, func, desc)
 
+#define PHI__ptr_addr(ptr) (reinterpret_cast<size_t>(ptr))
+#define PHI__void_ptr_addr(ptr)                                                \
+	(reinterpret_cast<size_t>(static_cast<void*>(ptr)))
+
 #define PHI__offset(type, member) (size_t(&((type*)(0))->member))
-#define PHI__get_type_with_member(type, member_name, member)                   \
-	((type*)(size_t(member) - PHI__offset(type, member_name)))
+#define PHI__get_type_with_member(type, member, member_inst)                   \
+	(reinterpret_cast<type*>(PHI__ptr_addr(member_inst) -                      \
+							 PHI__offset(type, member)))
 
 #define PHI__eps (1e-8)
 #define PHI__inf (1e256 * 1e256 * 1e256 * 1e256)
@@ -76,10 +81,6 @@ using dim_t = unsigned int;
 using id_t = unsigned int;
 using double_t = double;
 using hash_t = unsigned int;
-
-#define PHI__ptr_addr(ptr) (reinterpret_cast<size_t>(ptr))
-#define PHI__void_ptr_addr(ptr)                                                \
-	(reinterpret_cast<size_t>(static_cast<void*>(ptr)))
 
 #///////////////////////////////////////////////////////////////////////////////
 
@@ -167,25 +168,6 @@ template<typename Derive, typename Base> struct base_on {
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-
-template<typename BoolReturnedFunctor> struct ReverseBoolReturnedFunctor {
-private:
-	BoolReturnedFunctor f_;
-
-public:
-	template<typename... Args>
-	ReverseBoolReturnedFunctor(Args&&... args): f_(Forward<Args>(args)...) {}
-
-	template<typename... Args> bool operator()(Args&&... args) {
-		return !this->f_(Forward<Args>(args)...);
-	}
-
-	template<typename... Args> bool operator()(Args&&... args) const {
-		return !this->f_(Forward<Args>(args)...);
-	}
-};
-
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename F, typename... Functors> struct CombinedFunctor {
