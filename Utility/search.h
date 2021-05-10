@@ -7,6 +7,73 @@
 
 namespace phi {
 
+/*
+Returns the number of iterators in [begin, end)
+*/
+
+template<typename Iterator>
+typename iterator::trait<Iterator>::Diff
+Distance(iterator::Type::Forward iterator_type, Iterator begin, Iterator end) {
+	typename iterator::trait<Iterator>::Diff r(0);
+	for (; begin != end; ++begin) { ++r; }
+	return r;
+}
+
+template<typename Iterator>
+typename iterator::trait<Iterator>::Diff
+Distance(iterator::Type::RandomAccess iterator_type, Iterator begin,
+		 Iterator end) {
+	return end - begin;
+}
+
+template<typename Iterator> auto Distance(Iterator begin, Iterator end) {
+	return Distance(typename iterator::trait<Iterator>::Type(), begin, end);
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+/*
+Return the index of minimum element in [begin, end). Uses lt_cmper
+Uses eq_cmper to compare two elements. If there are two or more elements equal,
+undefined which index will return.
+*/
+
+template<typename ForwardIterator,
+		 typename LessThanComparer = DefaultLessThanComparer>
+ForwardIterator Min(ForwardIterator begin, ForwardIterator end,
+					LessThanComparer&& lt_cmper = LessThanComparer()) {
+	if (begin == end) { return end; }
+
+	ForwardIterator r(begin);
+
+	while (++begin != end) {
+		if (lt_cmper.lt(*begin, *r)) { r = begin; }
+	}
+
+	return r;
+}
+
+template<typename ForwardIterator,
+		 typename LessThanComparer = DefaultLessThanComparer>
+ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
+					LessThanComparer&& lt_cmper = LessThanComparer()) {
+	if (begin == end) { return end; }
+
+	ForwardIterator r(begin);
+
+	while (++begin != end) {
+		if (lt_cmper.lt(*r, *begin)) { r = begin; }
+	}
+
+	return r;
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
 template<typename ForwardIterator, typename F>
 size_t Count(ForwardIterator begin, ForwardIterator end, F&& func) {
 	size_t r(0);

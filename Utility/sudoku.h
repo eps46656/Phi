@@ -4,7 +4,6 @@
 #include "memory_op.h"
 #include "dancing_link.h"
 #include "index_arranger.h"
-#include "combination.h"
 
 namespace phi {
 

@@ -9,71 +9,63 @@
 #include "search.h"
 #include "iterator.h"
 #include "heap.h"
+#include "../Container/Vector.h"
 
 namespace phi {
 
-/*
-Returns the number of iterators in [begin, end)
-*/
-
-template<typename Iterator>
-typename iterator::trait<Iterator>::Diff
-Distance(iterator::Type::Forward iterator_type, Iterator begin, Iterator end) {
-	typename iterator::trait<Iterator>::Diff r(0);
-	for (; begin != end; ++begin) { ++r; }
+template<typename ForwardIterator>
+cntr::Vector<pair<size_t, ForwardIterator>>
+SchwartzianTransform(ForwardIterator begin, ForwardIterator end) {
+	cntr::Vector<pair<size_t, ForwardIterator>> r;
+	r.Reserve(Distance(begin, end));
+	for (size_t i(0); begin != end; ++begin, ++i) { r.Push(i, begin); }
 	return r;
 }
 
-template<typename Iterator>
-typename iterator::trait<Iterator>::Diff
-Distance(iterator::Type::RandomAccess iterator_type, Iterator begin,
-		 Iterator end) {
-	return end - begin;
-}
+template<typename ForwardIterator>
+void InverseSchwartzianTransform(
+	cntr::Vector<pair<size_t, ForwardIterator>>& v) {
+	using Value = typename iterator::trait<ForwardIterator>::Value;
 
-template<typename Iterator> auto Distance(Iterator begin, Iterator end) {
-	return Distance(begin, end, typename iterator::trait<Iterator>::Type());
-}
+	for (size_t i(0); i != v.size(); ++i) {
+		if (i == v[i].first) { continue; }
 
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
-#///////////////////////////////////////////////////////////////////////////////
+		size_t temp_i(i);
+		Value temp(Move(*v[i].second));
+		size_t hole(i);
 
-/*
-Return the index of minimum element in [begin, end). Uses lt_cmper
-Uses eq_cmper to compare two elements. If there are two or more elements equal,
-undefined which index will return.
-*/
+		do {
+			size_t next_hole = v[hole].first;
+			*v[hole].second = Move(*v[next_hole].second);
+			v[hole].first = hole;
+			hole = next_hole;
+		} while (v[hole].first != temp_i);
 
-template<typename ForwardIterator,
-		 typename LessThanComparer = DefaultLessThanComparer>
-ForwardIterator Min(ForwardIterator begin, ForwardIterator end,
-					const LessThanComparer& lt_cmper = LessThanComparer()) {
-	if (begin == end) { return end; }
-
-	ForwardIterator r(begin);
-
-	while (++begin != end) {
-		if (lt_cmper.lt(*begin, *r)) { r = begin; }
+		*v[hole].second = Move(temp);
+		v[hole].first = hole;
 	}
-
-	return r;
 }
 
-template<typename ForwardIterator,
-		 typename LessThanComparer = DefaultLessThanComparer>
-ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
-					const LessThanComparer& lt_cmper = LessThanComparer()) {
-	if (begin == end) { return end; }
+template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
+struct SchwartzianComparer_ {
+	FullComparer full_cmper;
 
-	ForwardIterator r(begin);
+	template<typename... Args>
+	SchwartzianComparer_(Args&&... args): full_cmper(Forward<Args>(args)...) {}
 
-	while (++begin != end) {
-		if (lt_cmper.lt(*r, *begin)) { r = begin; }
+	int operator()(pair<size_t, ForwardIterator>& x,
+				   pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper(*x.second, *y.second);
 	}
+	int operator()(pair<size_t, ForwardIterator>& x,
+				   pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper(*x.second, *y.second);
+	}
+};
 
-	return r;
-}
+template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
+using SchwartzianComparer = AutoImplementFullComparer<
+	SchwartzianComparer_<ForwardIterator, FullComparer>>;
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -85,8 +77,8 @@ template<typename ForwardIterator, typename Pivot,
 ForwardIterator Partition(iterator::Type::Forward iterator_type,
 						  ForwardIterator begin, ForwardIterator end,
 						  const Pivot& pivot,
-						  const LessThanComparer& lt_cmper = LessThanComparer(),
-						  const Swapper& swapper = Swapper()) {
+						  LessThanComparer&& lt_cmper = LessThanComparer(),
+						  Swapper&& swapper = Swapper()) {
 	if (begin == end) { return begin; }
 
 	while (!lt_cmper.lt(pivot, *begin)) {
@@ -109,9 +101,8 @@ template<typename BidirectionalIterator, typename Pivot,
 BidirectionalIterator
 Partition(iterator::Type::Bidirectional iterator_type,
 		  BidirectionalIterator begin, BidirectionalIterator end,
-		  const Pivot& pivot,
-		  const LessThanComparer& lt_cmper = LessThanComparer(),
-		  const Swapper& swapper = Swapper()) {
+		  const Pivot& pivot, LessThanComparer&& lt_cmper = LessThanComparer(),
+		  Swapper&& swapper = Swapper()) {
 	if (begin == end) { return begin; }
 
 	while (begin != --end) {
@@ -138,8 +129,8 @@ template<typename Iterator, typename Pivot,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 Iterator Partition(Iterator begin, Iterator end, const Pivot& pivot,
-				   const LessThanComparer& lt_cmper = LessThanComparer(),
-				   const Swapper& swapper = Swapper()) {
+				   LessThanComparer&& lt_cmper = LessThanComparer(),
+				   Swapper&& swapper = Swapper()) {
 	return Partition(typename iterator::trait<Iterator>::Type(), begin, end,
 					 pivot, lt_cmper, swapper);
 }
@@ -149,8 +140,7 @@ template<typename RandomAccessIterator, typename LessThanComparer,
 RandomAccessIterator
 UnrestrictedPartition(RandomAccessIterator begin, RandomAccessIterator end,
 					  typename iterator::trait<RandomAccessIterator>::Ref pivot,
-					  const LessThanComparer& lt_cmper,
-					  const Swapper& swapper) {
+					  LessThanComparer&& lt_cmper, Swapper&& swapper) {
 	for (;;) {
 		while (lt_cmper.lt(*begin, pivot)) { ++begin; }
 		do { --end; } while (lt_cmper.lt(pivot, *end));
@@ -167,8 +157,8 @@ UnrestrictedPartition(RandomAccessIterator begin, RandomAccessIterator end,
 template<typename BidirectionalIterator, typename LessThanComparer,
 		 typename Swapper>
 void HeadTailSwap(BidirectionalIterator begin, BidirectionalIterator end,
-				  const LessThanComparer& lt_cmper = DefaultLessThanComparer(),
-				  const Swapper& swapper = DefaultSwapper()) {
+				  LessThanComparer&& lt_cmper = DefaultLessThanComparer(),
+				  Swapper&& swapper = DefaultSwapper()) {
 	if (begin == end) { return; }
 
 	while (begin != --end) {
@@ -184,7 +174,7 @@ void HeadTailSwap(BidirectionalIterator begin, BidirectionalIterator end,
 template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void LinearInsert(BidirectionalIterator begin, BidirectionalIterator end,
-				  const LessThanComparer& lt_cmper = LessThanComparer()) {
+				  LessThanComparer&& lt_cmper = LessThanComparer()) {
 	if (begin == end || begin == --end) { return; }
 
 	BidirectionalIterator end_prev(end);
@@ -209,7 +199,7 @@ template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void UnrestrictedLinearInsert(
 	BidirectionalIterator last,
-	const LessThanComparer& lt_cmper = LessThanComparer()) {
+	LessThanComparer&& lt_cmper = LessThanComparer()) {
 	BidirectionalIterator last_prev(last);
 	--last_prev;
 
@@ -230,7 +220,7 @@ template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void UnrestrictedInsertionSort(
 	BidirectionalIterator begin, BidirectionalIterator end,
-	const LessThanComparer& lt_cmper = LessThanComparer()) {
+	LessThanComparer&& lt_cmper = LessThanComparer()) {
 	for (; begin != end; ++begin) { UnrestrictedLinearInsert(begin, lt_cmper); }
 }
 
@@ -242,7 +232,7 @@ Uses swapper to swap elemenets.
 template<typename BidirectionalIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 void InsertionSort(BidirectionalIterator begin, BidirectionalIterator end,
-				   const LessThanComparer& lt_cmper = LessThanComparer()) {
+				   LessThanComparer&& lt_cmper = LessThanComparer()) {
 	if (begin == end) { return; }
 	DefaultSwapper()(*begin, *Min(begin, end, lt_cmper));
 	UnrestrictedInsertionSort(++begin, end, lt_cmper);
@@ -256,8 +246,8 @@ template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void BubbleSort(ForwardIterator begin, ForwardIterator end,
-				const LessThanComparer& lt_cmper = LessThanComparer(),
-				const Swapper& swapper = Swapper()) {
+				LessThanComparer&& lt_cmper = LessThanComparer(),
+				Swapper&& swapper = Swapper()) {
 	if (begin == end) { return; }
 
 	ForwardIterator begin_next(begin);
@@ -299,8 +289,8 @@ template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void SelectionSort(ForwardIterator begin, ForwardIterator end,
-				   const LessThanComparer& lt_cmper = LessThanComparer(),
-				   const Swapper& swapper = Swapper()) {
+				   LessThanComparer&& lt_cmper = LessThanComparer(),
+				   Swapper&& swapper = Swapper()) {
 	for (; begin != end; ++begin) {
 		swapper(*begin, *Min(begin, end, lt_cmper));
 	}
@@ -314,8 +304,8 @@ template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void QuickSort(RandomAccessIterator begin, RandomAccessIterator end,
-			   const LessThanComparer& lt_cmper = LessThanComparer(),
-			   const Swapper& swapper = Swapper()) {
+			   LessThanComparer&& lt_cmper = LessThanComparer(),
+			   Swapper&& swapper = Swapper()) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	for (;;) {
@@ -360,8 +350,8 @@ template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void HeapSort(RandomAccessIterator begin, RandomAccessIterator end,
-			  const LessThanComparer& lt_cmper = LessThanComparer(),
-			  const Swapper& swapper = Swapper()) {
+			  LessThanComparer&& lt_cmper = LessThanComparer(),
+			  Swapper&& swapper = Swapper()) {
 	using Value = typename iterator::trait<RandomAccessIterator>::Value;
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
@@ -388,7 +378,7 @@ template<typename RandomAccessIterator, typename LessThanComparer,
 void IntroSort_(
 	typename iterator::trait<RandomAccessIterator>::Diff depth_limit,
 	RandomAccessIterator begin, RandomAccessIterator end,
-	const LessThanComparer& lt_cmper, const Swapper& swapper) {
+	LessThanComparer&& lt_cmper, Swapper&& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	while (depth_limit != Diff(0) && Diff(8) <= end - begin) {
@@ -424,8 +414,8 @@ template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void IntroSort(RandomAccessIterator begin, RandomAccessIterator end,
-			   const LessThanComparer& lt_cmper = LessThanComparer(),
-			   const Swapper& swapper = Swapper()) {
+			   LessThanComparer&& lt_cmper = LessThanComparer(),
+			   Swapper&& swapper = Swapper()) {
 	IntroSort_(end - begin, begin, end, lt_cmper, swapper);
 }
 
@@ -439,8 +429,8 @@ template<typename RandomAccessIterator,
 		 typename Swapper = DefaultSwapper>
 void Nth(typename iterator::trait<RandomAccessIterator>::Diff n,
 		 RandomAccessIterator begin, RandomAccessIterator end,
-		 const LessThanComparer& lt_cmper = LessThanComparer(),
-		 const Swapper& swapper = Swapper()) {
+		 LessThanComparer&& lt_cmper = LessThanComparer(),
+		 Swapper&& swapper = Swapper()) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	Diff diff(end - begin);
@@ -500,7 +490,7 @@ template<typename RandomAccessIterator, typename LessThanComparer,
 		 typename Swapper>
 void Sort_a_(typename iterator::trait<RandomAccessIterator>::Diff depth_limit,
 			 RandomAccessIterator begin, RandomAccessIterator end,
-			 const LessThanComparer& lt_cmper, const Swapper& swapper) {
+			 LessThanComparer&& lt_cmper, Swapper&& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	Diff diff(end - begin);
@@ -543,7 +533,7 @@ template<typename RandomAccessIterator, typename LessThanComparer,
 		 typename Swapper>
 void Sort_b_(typename iterator::trait<RandomAccessIterator>::Diff depth_limit,
 			 RandomAccessIterator begin, RandomAccessIterator end,
-			 const LessThanComparer& lt_cmper, const Swapper& swapper) {
+			 LessThanComparer&& lt_cmper, Swapper&& swapper) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	for (;;) {
@@ -588,8 +578,8 @@ template<typename RandomAccessIterator,
 		 typename LessThanComparer = DefaultLessThanComparer,
 		 typename Swapper = DefaultSwapper>
 void Sort(RandomAccessIterator begin, RandomAccessIterator end,
-		  const LessThanComparer& lt_cmper = LessThanComparer(),
-		  const Swapper& swapper = Swapper()) {
+		  LessThanComparer&& lt_cmper = LessThanComparer(),
+		  Swapper&& swapper = Swapper()) {
 	using Diff = typename iterator::trait<RandomAccessIterator>::Diff;
 
 	if (!(begin < end)) { return; }
