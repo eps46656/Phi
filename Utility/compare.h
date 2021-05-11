@@ -205,20 +205,6 @@ struct AutoImplementFullComparer: public UnImplementedFullComparer {
 	AutoImplementFullComparer(Args&&... args):
 		UnImplementedFullComparer(Forward<Args>(args)...) {}
 
-	template<typename X, typename Y> bool eq(X& x, Y& y) {
-		return this->operator()(x, y) == 0;
-	}
-	template<typename X, typename Y> bool eq(X& x, Y& y) const {
-		return this->operator()(x, y) == 0;
-	}
-
-	template<typename X, typename Y> bool ne(X& x, Y& y) {
-		return this->operator()(x, y) != 0;
-	}
-	template<typename X, typename Y> bool ne(X& x, Y& y) const {
-		return this->operator()(x, y) != 0;
-	}
-
 	template<typename X, typename Y> bool lt(X& x, Y& y) {
 		return this->operator()(x, y) == -1;
 	}
@@ -246,6 +232,100 @@ struct AutoImplementFullComparer: public UnImplementedFullComparer {
 	template<typename X, typename Y> bool ge(X& x, Y& y) const {
 		return this->operator()(x, y) != -1;
 	}
+
+	template<typename X, typename Y> bool eq(X& x, Y& y) {
+		return this->operator()(x, y) == 0;
+	}
+	template<typename X, typename Y> bool eq(X& x, Y& y) const {
+		return this->operator()(x, y) == 0;
+	}
+
+	template<typename X, typename Y> bool ne(X& x, Y& y) {
+		return this->operator()(x, y) != 0;
+	}
+	template<typename X, typename Y> bool ne(X& x, Y& y) const {
+		return this->operator()(x, y) != 0;
+	}
+};
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename FullComparer, typename Adapter> struct FullComparerAdapter {
+	FullComparer full_cmper;
+	Adapter adapter;
+
+	FullComparerAdapter() = default;
+
+	template<typename FullComparerConstructArg, typename AdapterConstructArg>
+	FullComparerAdapter(FullComparerConstructArg&& full_cmper_construct_arg,
+						AdapterConstructArg&& adapter_construct_arg):
+		full_cmper(full_cmper_construct_arg),
+		adapter(adapter_construct_arg) {}
+
+	template<typename X, typename Y> int operator()(X&& x, Y&& y) {
+		return this->full_cmper(this->adapter(Forward<X>(x)),
+								this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> int operator()(X&& x, Y&& y) const {
+		return this->full_cmper(this->adapter(Forward<X>(x)),
+								this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) {
+		return this->full_cmper.lt(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) const {
+		return this->full_cmper.lt(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) {
+		return this->full_cmper.gt(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) const {
+		return this->full_cmper.gt(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool le(X&& x, Y&& y) {
+		return this->full_cmper.le(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool le(X&& x, Y&& y) const {
+		return this->full_cmper.le(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) {
+		return this->full_cmper.ge(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) const {
+		return this->full_cmper.ge(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool eq(X&& x, Y&& y) {
+		return this->full_cmper.eq(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool eq(X&& x, Y&& y) const {
+		return this->full_cmper.eq(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+
+	template<typename X, typename Y> bool ne(X&& x, Y&& y) {
+		return this->full_cmper.ne(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
+	template<typename X, typename Y> bool ne(X&& x, Y&& y) const {
+		return this->full_cmper.ne(this->adapter(Forward<X>(x)),
+								   this->adapter(Forward<Y>(y)));
+	}
 };
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -262,15 +342,61 @@ struct ConstructFullComparerWithLessThanComparer_ {
 		lt_cmper(Forward<LessThanComparerConstructArgs>(
 			lt_cmper_construct_args)...) {}
 
-	template<typename X, typename Y> int operator()(X& x, Y& y) {
-		if (this->lt_cmper(x, y)) { return -1; }
-		if (this->lt_cmper(y, x)) { return 1; }
+	template<typename X, typename Y> int operator()(X&& x, Y&& y) {
+		if (this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y))) { return -1; }
+		if (this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x))) { return 1; }
 		return 0;
 	}
-	template<typename X, typename Y> int operator()(X& x, Y& y) const {
-		if (this->lt_cmper(x, y)) { return -1; }
-		if (this->lt_cmper(y, x)) { return 1; }
+	template<typename X, typename Y> int operator()(X&& x, Y&& y) const {
+		if (this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y))) { return -1; }
+		if (this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x))) { return 1; }
 		return 0;
+	}
+
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) {
+		return this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y));
+	}
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) const {
+		return this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y));
+	}
+
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) {
+		return this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) const {
+		return this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+
+	template<typename X, typename Y> bool le(X&& x, Y&& y) {
+		return !this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+	template<typename X, typename Y> bool le(X&& x, Y&& y) const {
+		return !this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) {
+		return !this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y));
+	}
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) const {
+		return !this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y));
+	}
+
+	template<typename X, typename Y> bool eq(X&& x, Y&& y) {
+		return !this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y)) &&
+			   !this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+	template<typename X, typename Y> bool eq(X&& x, Y&& y) const {
+		return !this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y)) &&
+			   !this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+
+	template<typename X, typename Y> bool ne(X&& x, Y&& y) {
+		return this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y)) ||
+			   this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
+	}
+	template<typename X, typename Y> bool ne(X&& x, Y&& y) const {
+		return this->lt_cmper.lt(Forward<X>(x), Forward<Y>(y)) ||
+			   this->lt_cmper.lt(Forward<Y>(y), Forward<X>(x));
 	}
 };
 
@@ -291,17 +417,60 @@ struct ConstructFullComparerWithFullComparerFunctionPtr_ {
 		full_cmper_func_ptr(full_cmper_func_ptr) {}
 
 	template<typename X, typename Y> int operator()(X& x, Y& y) {
-		return this->full_cmper_func_ptr(x, y);
+		int a(this->full_cmper_func_ptr(x, y));
+		if (a < 0) { return -1; }
+		if (0 < a) { return 1; }
+		return 0;
 	}
 	template<typename X, typename Y> int operator()(X& x, Y& y) const {
-		return this->full_cmper_func_ptr(x, y);
+		int a(this->full_cmper_func_ptr(x, y));
+		if (a < 0) { return -1; }
+		if (0 < a) { return 1; }
+		return 0;
+	}
+
+	template<typename X, typename Y> bool lt(X& x, Y& y) {
+		return this->full_cmper_func_ptr(x, y) < 0;
+	}
+	template<typename X, typename Y> bool lt(X& x, Y& y) const {
+		return this->full_cmper_func_ptr(x, y) < 0;
+	}
+
+	template<typename X, typename Y> bool gt(X& x, Y& y) {
+		return 0 < this->full_cmper_func_ptr(x, y);
+	}
+	template<typename X, typename Y> bool gt(X& x, Y& y) const {
+		return 0 < this->full_cmper_func_ptr(x, y);
+	}
+
+	template<typename X, typename Y> bool le(X& x, Y& y) {
+		return this->full_cmper_func_ptr(x, y) <= 0;
+	}
+	template<typename X, typename Y> bool le(X& x, Y& y) const {
+		return this->full_cmper_func_ptr(x, y) <= 0;
+	}
+
+	template<typename X, typename Y> bool ge(X& x, Y& y) {
+		return 0 <= this->full_cmper_func_ptr(x, y);
+	}
+	template<typename X, typename Y> bool ge(X& x, Y& y) const {
+		return 0 <= this->full_cmper_func_ptr(x, y);
+	}
+
+	template<typename X, typename Y> bool eq(X& x, Y& y) {
+		return this->full_cmper_func_ptr(x, y) == 0;
+	}
+	template<typename X, typename Y> bool eq(X& x, Y& y) const {
+		return this->full_cmper_func_ptr(x, y) == 0;
+	}
+
+	template<typename X, typename Y> bool ne(X& x, Y& y) {
+		return this->full_cmper_func_ptr(x, y) != 0;
+	}
+	template<typename X, typename Y> bool ne(X& x, Y& y) const {
+		return this->full_cmper_func_ptr(x, y) != 0;
 	}
 };
-
-template<typename FullComparerFunctionPtr>
-using ConstructFullComparerWithFullComparerFunctionPtr =
-	AutoImplementFullComparer<ConstructFullComparerWithFullComparerFunctionPtr_<
-		FullComparerFunctionPtr>>;
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
@@ -339,29 +508,25 @@ struct DefaultGreaterEqualThanComparer {
 	}
 };
 
-struct DefaultThreeWayComparer {
-	template<typename X, typename Y> int tw(X& x, Y& y) const {
-		if (x < y) { return -1; }
-		if (y < x) { return 1; }
-		return 0;
-	}
-};
-
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
 struct DefaultHalfComparer {
-	template<typename X, typename Y> bool lt(X& x, Y& y) const { return x < y; }
-
-	template<typename X, typename Y> bool gt(X& x, Y& y) const { return x > y; }
-
-	template<typename X, typename Y> bool le(X& x, Y& y) const {
-		return x <= y;
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) const {
+		return Forward<X>(x) < Forward<Y>(y);
 	}
 
-	template<typename X, typename Y> bool ge(X& x, Y& y) const {
-		return x >= y;
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) const {
+		return Forward<X>(x) > Forward<Y>(y);
+	}
+
+	template<typename X, typename Y> bool le(X&& x, Y&& y) const {
+		return Forward<X>(x) <= Forward<Y>(y);
+	}
+
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) const {
+		return Forward<X>(x) >= Forward<Y>(y);
 	}
 };
 
@@ -370,30 +535,34 @@ struct DefaultHalfComparer {
 #///////////////////////////////////////////////////////////////////////////////
 
 struct DefaultFullComparer {
-	template<typename X, typename Y> int operator()(X& x, Y& y) const {
-		if (x < y) { return -1; }
-		if (y < x) { return 1; }
+	template<typename X, typename Y> int operator()(X&& x, Y&& y) const {
+		if (Forward<X>(x) < Forward<Y>(y)) { return -1; }
+		if (Forward<Y>(y) < Forward<X>(x)) { return 1; }
 		return 0;
 	}
 
-	template<typename X, typename Y> bool eq(X& x, Y& y) const {
-		return x == y;
+	template<typename X, typename Y> bool eq(X&& x, Y&& y) const {
+		return Forward<X>(x) == Forward<Y>(y);
 	}
 
-	template<typename X, typename Y> bool ne(X& x, Y& y) const {
-		return x != y;
+	template<typename X, typename Y> bool ne(X&& x, Y&& y) const {
+		return Forward<X>(x) != Forward<Y>(y);
 	}
 
-	template<typename X, typename Y> bool lt(X& x, Y& y) const { return x < y; }
-
-	template<typename X, typename Y> bool gt(X& x, Y& y) const { return x > y; }
-
-	template<typename X, typename Y> bool le(X& x, Y& y) const {
-		return x <= y;
+	template<typename X, typename Y> bool lt(X&& x, Y&& y) const {
+		return Forward<X>(x) < Forward<Y>(y);
 	}
 
-	template<typename X, typename Y> bool ge(X& x, Y& y) const {
-		return x >= y;
+	template<typename X, typename Y> bool gt(X&& x, Y&& y) const {
+		return Forward<X>(x) > Forward<Y>(y);
+	}
+
+	template<typename X, typename Y> bool le(X&& x, Y&& y) const {
+		return Forward<X>(x) <= Forward<Y>(y);
+	}
+
+	template<typename X, typename Y> bool ge(X&& x, Y&& y) const {
+		return Forward<X>(x) >= Forward<Y>(y);
 	}
 };
 

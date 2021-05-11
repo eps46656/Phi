@@ -46,12 +46,12 @@ void InverseSchwartzianTransform(
 	}
 }
 
-template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
-struct SchwartzianComparer_ {
+/*template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
+struct SchwartzianComparer {
 	FullComparer full_cmper;
 
 	template<typename... Args>
-	SchwartzianComparer_(Args&&... args): full_cmper(Forward<Args>(args)...) {}
+	SchwartzianComparer(Args&&... args): full_cmper(Forward<Args>(args)...) {}
 
 	int operator()(pair<size_t, ForwardIterator>& x,
 				   pair<size_t, ForwardIterator>& y) {
@@ -61,11 +61,73 @@ struct SchwartzianComparer_ {
 				   pair<size_t, ForwardIterator>& y) const {
 		return this->full_cmper(*x.second, *y.second);
 	}
+
+	bool lt(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper.lt(*x.second, *y.second);
+	}
+	bool lt(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper.lt(*x.second, *y.second);
+	}
+
+	bool gt(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper.gt(*x.second, *y.second);
+	}
+	bool gt(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper.gt(*x.second, *y.second);
+	}
+
+	bool le(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper.le(*x.second, *y.second);
+	}
+	bool le(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper.le(*x.second, *y.second);
+	}
+
+	bool eq(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper.eq(*x.second, *y.second);
+	}
+	bool eq(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper.eq(*x.second, *y.second);
+	}
+
+	bool ne(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) {
+		return this->full_cmper.ne(*x.second, *y.second);
+	}
+	bool ne(pair<size_t, ForwardIterator>& x,
+			pair<size_t, ForwardIterator>& y) const {
+		return this->full_cmper.ne(*x.second, *y.second);
+	}
+};*/
+
+template<typename ForwardIterator> struct SchwartzianAdapter {
+	typename iterator::trait<ForwardIterator>::Value&
+	operator()(pair<size_t, ForwardIterator>& x) {
+		return *x.second;
+	}
+
+	typename iterator::trait<ForwardIterator>::Value&
+	operator()(pair<size_t, ForwardIterator>& x) const {
+		return *x.second;
+	}
 };
 
 template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
+using SchwartzianComparer =
+	FullComparerAdapter<FullComparer, SchwartzianAdapter<ForwardIterator>>;
+/*
+template<typename ForwardIterator, typename FullComparer = DefaultFullComparer>
 using SchwartzianComparer = AutoImplementFullComparer<
 	SchwartzianComparer_<ForwardIterator, FullComparer>>;
+	*/
 
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
