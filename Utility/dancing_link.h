@@ -6,8 +6,6 @@
 #include "../Container/Set.h"
 #include "../Container/Pool.h"
 
-#define PHI__throw__local(desc) PHI__throw(DancingLink, __func__, desc);
-
 namespace phi {
 
 class DancingLink {
@@ -220,7 +218,7 @@ DancingLink::~DancingLink() { this->Release(); }
 void DancingLink::AddHot(size_t state_index, size_t cst_index) {
 	PHI__debug_if(this->state_num_ <= state_index ||
 				  (this->nec_cst_num_ + this->opt_cst_num_) <= cst_index) {
-		PHI__throw__local("error");
+		PHI__throw("error");
 	}
 
 	cntr::Vector<size_t>& cst(this->data_[state_index]);
@@ -442,7 +440,5 @@ void DancingLink::Print(Node* root) {
 }*/
 
 }
-
-#undef PHI__throw__local
 
 #endif

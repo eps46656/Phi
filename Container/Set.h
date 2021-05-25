@@ -7,8 +7,6 @@
 #include "RedBlackTree.h"
 #include "Pool.h"
 
-#define PHI__throw__local(desc) PHI__throw(cntr::Set, __func__, desc);
-
 namespace phi {
 namespace cntr {
 
@@ -667,14 +665,14 @@ Set<T, FullComparer>::Insert(Args&&... args) {
 
 template<typename T, typename FullComparer>
 void Set<T, FullComparer>::Release(const Iterator& iter) {
-	PHI__debug_if(this != iter.rbt_) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this != iter.rbt_) { PHI__throw("iter error"); }
 	if (iter.node_ != nullptr) { this->rbt_.Release_(iter.node_); }
 }
 
 template<typename T, typename FullComparer>
 typename Set<T, FullComparer>::Iterator
 Set<T, FullComparer>::Erase(const Iterator& iter) {
-	PHI__debug_if(this != iter.rbt_) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this != iter.rbt_) { PHI__throw("iter error"); }
 	if (iter.node_ == nullptr) { return Iterator(this, nullptr); }
 
 	Node* next_node(static_cast<Node*>(iter.node_->next()));
@@ -763,7 +761,7 @@ T* Set<T, FullComparer>::Iterator::operator->() const {
 template<typename T, typename FullComparer>
 typename Set<T, FullComparer>::Iterator&
 Set<T, FullComparer>::Iterator::operator++() {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 
 	this->node_ = this->node_ == nullptr
 					  ? this->set_->first_node_()
@@ -775,7 +773,7 @@ Set<T, FullComparer>::Iterator::operator++() {
 template<typename T, typename FullComparer>
 typename Set<T, FullComparer>::Iterator&
 Set<T, FullComparer>::Iterator::operator--() {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 
 	this->node_ = this->node_ == nullptr
 					  ? this->set_->last_node_()
@@ -853,13 +851,13 @@ bool Set<T, FullComparer>::ConstIterator::operator!=(
 
 template<typename T, typename FullComparer>
 const T& Set<T, FullComparer>::ConstIterator::operator*() const {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 	return this->node_->value;
 }
 
 template<typename T, typename FullComparer>
 const T* Set<T, FullComparer>::ConstIterator::operator->() const {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 	return &this->node_->value;
 }
 
@@ -868,7 +866,7 @@ const T* Set<T, FullComparer>::ConstIterator::operator->() const {
 template<typename T, typename FullComparer>
 typename Set<T, FullComparer>::ConstIterator&
 Set<T, FullComparer>::ConstIterator::operator++() {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 
 	this->node_ = this->node_ == nullptr
 					  ? this->set_->first_node_()
@@ -880,7 +878,7 @@ Set<T, FullComparer>::ConstIterator::operator++() {
 template<typename T, typename FullComparer>
 typename Set<T, FullComparer>::ConstIterator&
 Set<T, FullComparer>::ConstIterator::operator--() {
-	PHI__debug_if(this->set_ == nullptr) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this->set_ == nullptr) { PHI__throw("iter error"); }
 
 	this->node_ = this->node_ == nullptr
 					  ? this->set_->last_node_()
@@ -891,7 +889,5 @@ Set<T, FullComparer>::ConstIterator::operator--() {
 
 }
 }
-
-#undef PHI__throw__local
 
 #endif

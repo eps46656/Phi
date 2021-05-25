@@ -8,7 +8,7 @@
 namespace phi {
 
 /*
-Returns the number of iterators in [begin, end)
+ * Returns the distance from begin to end
 */
 
 template<typename Iterator>
@@ -35,9 +35,9 @@ template<typename Iterator> auto Distance(Iterator begin, Iterator end) {
 #///////////////////////////////////////////////////////////////////////////////
 
 /*
-Return the index of minimum element in [begin, end). Uses lt_cmper
-Uses eq_cmper to compare two elements. If there are two or more elements equal,
-undefined which index will return.
+ * Return the iterator of minimum element in [begin, end).
+ * Using eq_cmper to compare two elements.
+ * If there are two or more elements equal, undefined which index will return.
 */
 
 template<typename ForwardIterator,
@@ -55,6 +55,11 @@ ForwardIterator Min(ForwardIterator begin, ForwardIterator end,
 	return r;
 }
 
+/*
+ * Return the iterator of maximum element in [begin, end).
+ * Using eq_cmper to compare two elements.
+ * If there are two or more elements equal, undefined which index will return.
+*/
 template<typename ForwardIterator,
 		 typename LessThanComparer = DefaultLessThanComparer>
 ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
@@ -74,14 +79,13 @@ ForwardIterator Max(ForwardIterator begin, ForwardIterator end,
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * Count how many elements in [begin, end) let the output of func be true.
+*/
 template<typename ForwardIterator, typename F>
 size_t Count(ForwardIterator begin, ForwardIterator end, F&& func) {
 	size_t r(0);
-
-	for (; begin != end; ++begin) {
-		if (func(*begin)) { ++r; }
-	}
-
+	for (; begin != end; ++begin) { r += func(*begin); }
 	return r;
 }
 
@@ -91,11 +95,7 @@ size_t CountEqual(ForwardIterator begin, ForwardIterator end,
 				  const Target& target,
 				  const EqualComparer& eq_cmper = EqualComparer()) {
 	size_t r(0);
-
-	for (; begin != end; ++begin) {
-		if (eq_cmper.eq(*begin, target)) { ++r; }
-	}
-
+	for (; begin != end; ++begin) { r += eq_cmper.eq(*begin, target); }
 	return r;
 }
 

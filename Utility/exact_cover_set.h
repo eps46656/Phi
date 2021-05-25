@@ -116,7 +116,7 @@ const cntr::Set<ExactCover::Effect*>& ExactCover::all_eff() const {
 #///////////////////////////////////////////////////////////////////////////////
 
 void ExactCover::AddState(State* state) {
-	PHI__debug_if(state->ec_ != nullptr) { PHI__throw(, __func__, "error"); }
+	PHI__debug_if(state->ec_ != nullptr) { PHI__throw("error"); }
 
 	this->all_state_.Insert(state);
 	state->ec_ = this;
@@ -125,7 +125,7 @@ void ExactCover::AddState(State* state) {
 }
 
 void ExactCover::AddEffect(Effect* eff, bool is_nec) {
-	PHI__debug_if(eff->ec_ != nullptr) { PHI__throw(, __func__, "error"); }
+	PHI__debug_if(eff->ec_ != nullptr) { PHI__throw("error"); }
 
 	if (this == eff->ec_) { return; }
 
@@ -139,10 +139,10 @@ void ExactCover::AddEffect(Effect* eff, bool is_nec) {
 
 void ExactCover::AddHot(State* state, Effect* eff) {
 	PHI__debug_if(this != state->ec_ || this != eff->ec_) {
-		PHI__throw(, __func__, "error");
+		PHI__throw("error");
 	}
 
-	if (!state->eff.Insert(eff)) { return; }
+	if (!state->eff.Insert(eff).second) { return; }
 
 	{
 		auto iter(eff->state.first_iterator());

@@ -105,6 +105,40 @@ void atan(double& phase, double& r, double x, double y) {
 
 double power(double base, double exponent) { return exp(exponent * ln(base)); }
 
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+#if (defined(__GNUC__) || defined(__GNUG__))
+
+template<typename Int> int intlog2(Int x) {
+	return 8 * sizeof(unsigned int) - __builtin_clz(x);
+}
+
+#else
+
+template<int bit> struct intlog2_ {
+	template<typename Int> static int F(Int x) {
+		constexpr int half_bit(bit >> 1);
+		int a(half_bit * ((x >> half_bit) != 0));
+		return a + intlog2_<bit / 2>::F(x >> a);
+	}
+};
+
+template<> struct intlog2_<1> {
+	template<typename Int> static int F(Int x) { return 0; }
+};
+
+template<typename Int> int intlog2(Int x) {
+	return intlog2_<8 * sizeof(Int)>::F(x);
+}
+
+#endif
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
 }
 }
 

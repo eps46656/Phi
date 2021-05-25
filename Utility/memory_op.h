@@ -4,7 +4,7 @@
 #include "../define.h"
 #include "memory.h"
 #include "compare.h"
-#include "swap.h"
+#include "iterator.h"
 
 namespace phi {
 
@@ -49,9 +49,28 @@ template<typename T> void Delete(T* begin, T* end) {
 }
 
 #///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
 
-template<typename Dst, typename T>
-void Fill(size_t size, Dst&& dst, const T& value) {
+template<typename T> void Swap(T& x, T& y) {
+	if (&x == &y) { return; }
+	T temp(Move(x));
+	x = Move(y);
+	y = Move(temp);
+}
+
+template<typename T> void UncheckedSwap(T& x, T& y) {
+	T temp(Move(x));
+	x = Move(y);
+	y = Move(temp);
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename Dst, typename Value>
+void Fill(size_t size, Dst&& dst, const Value& value) {
 	for (size_t i(0); i != size; ++i) { dst[i] = value; }
 }
 
@@ -66,15 +85,24 @@ template<size_t i, size_t size> struct Fill_ {
 };
 
 template<size_t size> struct Fill_<size, size> {
-	template<typename Dst, typename T>
-	static void F(Dst&& dst, const T& value) {}
+	template<typename Dst, typename Value>
+	static void F(Dst&& dst, const Value& value) {}
 };
 
-template<size_t size, typename Dst, typename T>
-void Fill(Dst&& dst, const T& value) {
+template<size_t size, typename Dst, typename Value>
+void Fill(Dst&& dst, const Value& value) {
 	Fill_<0, size>::F(Forward<Dst>(dst), value);
 }
 
+#///////////////////////////////////////////////////////////////////////////////
+
+template<typename ForwardIterator, typename Value>
+void Fill(ForwardIterator begin, ForwardIterator end, const Value& value) {
+	for (; begin != end; ++begin) { *begin = value; }
+}
+
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename Dst, typename Src>
@@ -217,9 +245,9 @@ template<size_t size> void Memcpy(void* dst, const void* src) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t i, size_t size> struct Init_ {
-	template<typename Dst, typename T, typename... Args>
-	static void F(Dst* dst, T&& x, Args&&... args) {
-		new (dst + i) Dst(Forward<T>(x));
+	template<typename Dst, typename X, typename... Args>
+	static void F(Dst* dst, X&& x, Args&&... args) {
+		new (dst + i) Dst(Forward<X>(x));
 		Init_<i + 1, size>::F(dst, Forward<Args>(args)...);
 	}
 };
@@ -237,27 +265,29 @@ void Init(Dst* dst, Args&&... args) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t i, size_t size> struct Assign_ {
-	template<typename Dst, typename T> static void F(Dst&& dst, T&& value) {
-		dst[i] = Forward<T>(value);
-		Assign_<i + 1, size>::F(dst, Forward<T>(value));
+	template<typename Dst, typename Value>
+	static void F(Dst&& dst, Value&& value) {
+		dst[i] = Forward<Value>(value);
+		Assign_<i + 1, size>::F(dst, Forward<Value>(value));
 	}
 };
 
 template<size_t size> struct Assign_<size, size> {
-	template<typename Dst, typename T> static void F(Dst&& dst, T&& value) {}
+	template<typename Dst, typename Value>
+	static void F(Dst&& dst, Value&& value) {}
 };
 
-template<size_t size, typename Dst, typename T>
-void Assign(Dst&& dst, T&& value) {
-	Assign_<0, size>::F(dst, Forward<T>(value));
+template<size_t size, typename Dst, typename Value>
+void Assign(Dst&& dst, Value&& value) {
+	Assign_<0, size>::F(dst, Forward<Value>(value));
 }
 
 #///////////////////////////////////////////////////////////////////////////////
 
 template<size_t i, size_t size> struct AssignVector_ {
-	template<typename Dst, typename T, typename... Args>
-	static void F(Dst&& dst, T&& x, Args&&... args) {
-		dst[i] = Forward<T>(x);
+	template<typename Dst, typename X, typename... Args>
+	static void F(Dst&& dst, X&& x, Args&&... args) {
+		dst[i] = Forward<X>(x);
 		Assign_<i + 1, size>::F(dst, Forward<Args>(args)...);
 	}
 };
@@ -276,9 +306,9 @@ void AssignVector(Dst&& dst, Args&&... args) {
 
 template<size_t i, size_t j, size_t col_dim, size_t row_dim, size_t align>
 struct Assign2DVector_ {
-	template<typename Dst, typename T, typename... Args>
-	static void F(Dst&& dst, T&& x, Args&&... args) {
-		Forward<Dst>(dst)[align * i + j] = Forward<T>(x);
+	template<typename Dst, typename X, typename... Args>
+	static void F(Dst&& dst, X&& x, Args&&... args) {
+		Forward<Dst>(dst)[align * i + j] = Forward<X>(x);
 		Assign2DVector_<i, j + 1, col_dim, row_dim, align>::F(
 			Forward<Dst>(dst), Forward<Args>(args)...);
 	}
@@ -310,25 +340,21 @@ void Assign2DVector(Dst&& dst, Args&&... args) {
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
-template<typename Src, typename Swapper = DefaultSwapper>
-void Reverse(size_t lower, size_t upper, Src& src,
-			 const Swapper& swapper = Swapper()) {
+template<typename Src> void Reverse(size_t lower, size_t upper, Src& src) {
 	if (upper <= lower) { return; }
 	for (--upper; lower < upper; ++lower, --upper) {
-		swapper(src[lower], src[upper]);
+		Swap(src[lower], src[upper]);
 	}
 }
 
-template<typename Src, typename Swapper = DefaultSwapper>
-void Reverse(size_t size, Src& src, const Swapper& swapper = Swapper()) {
-	Reverse(0, size, src, swapper);
+template<typename Src> void Reverse(size_t size, Src& src) {
+	Reverse(0, size, src);
 }
 
-template<typename BidirectionalIterator, typename Swapper = DefaultSwapper>
-void Reverse(BidirectionalIterator begin, BidirectionalIterator end,
-			 const Swapper& swapper = Swapper()) {
+template<typename BidirectionalIterator>
+void Reverse(BidirectionalIterator begin, BidirectionalIterator end) {
 	if ((begin == end) || (begin == --end)) { return; }
-	do { swapper(*begin, *end); } while ((++begin != end) && (begin != --end));
+	do { Swap(*begin, *end); } while ((++begin != end) && (begin != --end));
 }
 
 }

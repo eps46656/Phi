@@ -9,33 +9,35 @@
 
 namespace phi {
 
-inline void srand(long int seed) { srand48(seed); }
-
-inline long int srand() {
-	time_t t;
-	long int seed((long int)time(&t));
-	srand(seed);
+inline long int SetRandom(long int seed) {
+	srand48(seed);
 	return seed;
 }
 
-inline unsigned long int rand() { return lrand48(); }
-
-inline unsigned int rand(unsigned int lower, unsigned int upper) {
-	return rand() % (upper - lower) + lower;
+inline long int SetRandom() {
+	time_t t;
+	long int seed((long int)time(&t));
+	SetRandom(seed);
+	return seed;
 }
 
-template<typename Src, typename Swapper = DefaultSwapper>
-void shuffle(Src& src, size_t size, size_t swap_times = 0,
-			 Swapper swapper = Swapper()) {
+inline unsigned long int Random() { return lrand48(); }
+
+inline unsigned int Random(unsigned int lower, unsigned int upper) {
+	return Random() % (upper - lower) + lower;
+}
+
+template<typename Src>
+void Shuffle(Src& src, size_t size, size_t swap_times = 0) {
 	if (swap_times == 0) { swap_times = size * 2; }
 
-	while (swap_times != 0) {
-		size_t a(rand(0, size));
-		size_t b(rand(0, size));
+	do {
+		size_t a(Random(0, size));
+		size_t b(Random(0, size));
 		if (a == b) { continue; }
-		swapper(src[a], src[b]);
+		UncheckedSwap(src[a], src[b]);
 		--swap_times;
-	}
+	} while (swap_times != 0);
 }
 
 }

@@ -2,6 +2,7 @@
 #define PHI__define_guard__Utility__memory_h
 
 #include "../define.h"
+#include <new>
 
 namespace phi {
 

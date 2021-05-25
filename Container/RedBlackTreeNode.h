@@ -4,9 +4,6 @@
 #include "../define.h"
 #include "TreeNode.h"
 
-#define PHI__throw__local(desc)                                                \
-	PHI__throw(cntr::RedBlackTreeNode, __func__, desc);
-
 #define PHI__rbtn_ptr(x) static_cast<RedBlackTreeNode*>(x)
 #define PHI__const_rbtn_ptr(x) static_cast<const RedBlackTreeNode*>(x)
 
@@ -64,7 +61,9 @@ struct RedBlackTreeNode: public TreeNode {
 
 #///////////////////////////////////////////////////////////////////////////////
 
+#if PHI__debug
 	inline size_t Check() const;
+#endif
 
 protected:
 	bool color_;
@@ -366,6 +365,8 @@ void RedBlackTreeNode::ReleaseAll_(RedBlackTreeNode* n) {
 
 #///////////////////////////////////////////////////////////////////////////////
 
+#if PHI__debug
+
 size_t RedBlackTreeNode::Check() const {
 	if (this->p_ != nullptr) {
 		if ((this == PHI__const_rbtn_ptr(this->p_)->l_) ==
@@ -386,10 +387,11 @@ size_t RedBlackTreeNode::Check() const {
 	return this->color_ == black ? l_bh + 1 : l_bh;
 }
 
+#endif
+
 }
 }
 
-#undef PHI__throw__local
 #undef PHI__rbtn_ptr
 #undef PHI__const_rbtn_ptr
 

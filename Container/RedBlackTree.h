@@ -3,8 +3,6 @@
 
 #include "RedBlackTreeNode.h"
 
-#define PHI__throw__local(desc) PHI__throw(cntr::RedBlackTree, __func__, desc);
-
 namespace phi {
 namespace cntr {
 
@@ -310,7 +308,7 @@ insert_complete:;
 
 template<typename FullComparer>
 RedBlackTreeNode* RedBlackTree<FullComparer>::Insert(RedBlackTreeNode* node) {
-	PHI__debug_if(!node->sole()) { PHI__throw__local("node is not sole"); }
+	PHI__debug_if(!node->sole()) { PHI__throw("node is not sole"); }
 	return this->Insert_(node);
 }
 
@@ -339,7 +337,7 @@ void RedBlackTree<FullComparer>::Release_(RedBlackTreeNode* node) {
 template<typename FullComparer>
 void RedBlackTree<FullComparer>::Release(RedBlackTreeNode* node) {
 	PHI__debug_if(this->root_ != node->root()) {
-		PHI__throw__local("node is not in this tree");
+		PHI__throw("node is not in this tree");
 	}
 
 	this->Release_(node);
@@ -367,7 +365,5 @@ template<typename FullComparer> void RedBlackTree<FullComparer>::Check() const {
 
 }
 }
-
-#undef PHI__throw__local
 
 #endif

@@ -6,8 +6,6 @@
 #include "../Utility/swap.h"
 #include "../Utility/iterator.h"
 
-#define PHI__throw__local(desc) PHI__throw(cntr::Vector<T>, __func__, desc)
-
 namespace phi {
 namespace cntr {
 
@@ -412,22 +410,22 @@ bool Vector<T>::operator!=(const Vector<Y>& vector) const {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> T& Vector<T>::front() {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return *this->data_;
 }
 
 template<typename T> const T& Vector<T>::front() const {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return *this->data_;
 }
 
 template<typename T> T& Vector<T>::back() {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return this->data_[this->size_ - 1];
 }
 
 template<typename T> const T& Vector<T>::back() const {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return this->data_[this->size_ - 1];
 }
 
@@ -442,12 +440,12 @@ template<typename T> const T& Vector<T>::operator[](size_t index) const {
 }
 
 template<typename T> T& Vector<T>::at(size_t index) {
-	PHI__debug_if(this->size_ <= index) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ <= index) { PHI__throw("index error"); }
 	return this->data_[index];
 }
 
 template<typename T> const T& Vector<T>::at(size_t index) const {
-	PHI__debug_if(this->size_ <= index) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ <= index) { PHI__throw("index error"); }
 	return this->data_[index];
 }
 
@@ -498,7 +496,7 @@ void Vector<T>::PushIterator(BidirectionalIterator begin,
 template<typename T>
 template<typename... Args>
 void Vector<T>::Insert(size_t index, Args&&... args) {
-	PHI__debug_if(!this->valid_(index)) { PHI__throw__local("index error"); }
+	PHI__debug_if(!this->valid_(index)) { PHI__throw("index error"); }
 
 	if (index == this->size_) {
 		this->PushBack(Forward<Args>(args)...);
@@ -547,7 +545,7 @@ template<typename T>
 template<typename BidirectionalIterator>
 void Vector<T>::Insert(size_t index, BidirectionalIterator begin,
 					   BidirectionalIterator end) {
-	PHI__debug_if(this->size_ < index) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ < index) { PHI__throw("index error"); }
 
 	if (index == this->size_) {
 		this->PushIterator(begin, end);
@@ -642,13 +640,13 @@ void Vector<T>::Insert(size_t index, BidirectionalIterator begin,
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> void Vector<T>::Pop() {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	--this->size_;
 	this->data_[this->size_].~T();
 }
 
 template<typename T> void Vector<T>::Pop(size_t size) {
-	PHI__debug_if(this->size_ < size) { PHI__throw__local("size error"); }
+	PHI__debug_if(this->size_ < size) { PHI__throw("size error"); }
 
 	for (size_t i(this->size_ - size); i != this->size_; ++i) {
 		this->data_[i].~T();
@@ -660,7 +658,7 @@ template<typename T> void Vector<T>::Pop(size_t size) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> void Vector<T>::Erase(size_t index) {
-	PHI__debug_if(this->size_ <= index) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ <= index) { PHI__throw("index error"); }
 
 	--this->size_;
 
@@ -673,7 +671,7 @@ template<typename T> void Vector<T>::Erase(size_t index) {
 
 template<typename T> void Vector<T>::Erase(size_t begin, size_t end) {
 	PHI__debug_if(this->size_ <= begin || this->size_ < end || end < begin) {
-		PHI__throw__local("index error");
+		PHI__throw("index error");
 	}
 
 	size_t d_size(end - begin);
@@ -1051,7 +1049,5 @@ Vector<T>::ConstIterator::operator[](Diff index) const {
 
 }
 }
-
-#undef PHI__throw__local
 
 #endif

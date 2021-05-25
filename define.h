@@ -11,12 +11,20 @@
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
+#define PHI__func __PRETTY_FUNCTION__
+
 #if PHI__debug_flag
 	#include <iostream>
 	#include <assert.h>
 
 	#define PHI__debug
 	#define PHI__debug_if(x) if (x)
+
+	#define PHI__print_time                                                    \
+		{                                                                      \
+			time_t t;                                                          \
+			std::cout << "{ time: " << (long int)time(&t) << " }\n";           \
+		}
 
 	#define PHI__print_pos                                                     \
 		{ std::cout << "{ " << __FILE__ << ":" << __LINE__ << " }\n"; }
@@ -32,17 +40,17 @@
 			std::cin.getline(&c___, 1);                                        \
 		}
 
-	#define PHI__throw__(type, func, desc)                                     \
+	#define PHI__throw(desc)                                                   \
 		{                                                                      \
-			std::cout << __LINE__ << " " << type << "::" << func << "\n\t"     \
-					  << desc << "\n";                                         \
+			std::cout << PHI__func << ": " << __LINE__ << "\n\t" << desc       \
+					  << "\n";                                                 \
 			assert(false);                                                     \
 		}
 #else
 	#define PHI__debug if constexpr (false)
 	#define PHI__debug_if(x) if constexpr (false)
 
-	#define PHI__throw__(type, func, desc) ;
+	#define PHI__throw(desc)
 
 	#define PHI__print_pos
 
@@ -50,9 +58,6 @@
 
 	#define PHI__interrupt
 #endif
-
-#define PHI__throw_(type, func, desc) PHI__throw__(#type, func, desc)
-#define PHI__throw(type, func, desc) PHI__throw_(type, func, desc)
 
 #define PHI__ptr_addr(ptr) (reinterpret_cast<size_t>(ptr))
 #define PHI__void_ptr_addr(ptr)                                                \
@@ -71,6 +76,10 @@
 #///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
+#include <iostream>
+
+using abc_t = std::ptrdiff_t;
+
 namespace phi {
 
 using nullptr_t = decltype(nullptr);
@@ -82,6 +91,8 @@ using id_t = unsigned int;
 using double_t = double;
 using hash_t = unsigned int;
 
+#///////////////////////////////////////////////////////////////////////////////
+#///////////////////////////////////////////////////////////////////////////////
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> struct identity { using type = T; };
@@ -208,7 +219,6 @@ public:
 		return this->f_(Forward<Args>(args)...);
 	}
 };
-
 }
 
 #endif

@@ -13,6 +13,8 @@ using prime_t = unsigned int;
 
 static_assert(PHI__prime_t_bit_num <= sizeof(prime_t) * 8, "uint bit not ");
 
+#if PHI__debug
+
 void print_bit(prime_t x) {
 	for (int i(0); i != PHI__prime_t_bit_num; ++i) {
 		if (i != 0 && i % 4 == 0) { std::cout << ','; }
@@ -23,6 +25,8 @@ void print_bit(prime_t x) {
 
 	std::cout << "\n";
 }
+
+#endif
 
 int uppestbit(prime_t x) {
 	for (int i(PHI__prime_t_bit_num); i != 0;) {
@@ -63,7 +67,9 @@ private:
 		inline pair<bool, prime_t> GetWithIndex(int index);
 		inline bool GetWithNum(prime_t num);
 
+#if PHI__debug
 		inline void Print() const;
+#endif
 	};
 
 public:
@@ -109,7 +115,9 @@ public:
 	inline void Expand();
 	inline void Expand(prime_t x);
 
+#if PHI__debug
 	inline void PrintBlock(int index);
+#endif
 
 	inline bool IsPrime(prime_t num);
 
@@ -277,6 +285,8 @@ void PrimeTable::Expand(prime_t num) {
 	// lock end
 }
 
+#if PHI__debug
+
 void PrimeTable::PrintBlock(int index) {
 	/*if(this->last_block_index_<index){
 
@@ -285,6 +295,8 @@ void PrimeTable::PrintBlock(int index) {
 
 	return GetBlock(root_(), index)->Print();
 }
+
+#endif
 
 bool PrimeTable::IsPrime(prime_t num) {
 	if (num == 2) { return true; }
@@ -314,6 +326,8 @@ bool PrimeTable::Block::GetWithNum(prime_t num) {
 	return this->value[i] & (char(1) << (index - i * 8));
 }
 
+#if PHI__debug
+
 void PrimeTable::Block::Print() const {
 	for (int i(0); i != BlockSize / 8; ++i) {
 		for (int j(0); j != 8; ++j) {
@@ -325,6 +339,9 @@ void PrimeTable::Block::Print() const {
 
 	std::cout << "\n";
 }
+
+#endif
+
 }
 
 #endif

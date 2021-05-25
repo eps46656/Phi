@@ -5,9 +5,6 @@
 #include "DoublyNode.h"
 #include "Pool.h"
 
-#define PHI__throw__local(desc)                                                \
-	PHI__throw(cntr::ChainingHashTable, __func__, desc);
-
 namespace phi {
 namespace cntr {
 
@@ -687,7 +684,7 @@ void ChainingHashTable<T, Hasher, EqualComparer>::Erase_(size_t index,
 
 template<typename T, typename Hasher, typename EqualComparer>
 void ChainingHashTable<T, Hasher, EqualComparer>::Erase(const Iterator& iter) {
-	PHI__debug_if(this != iter.cht_) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this != iter.cht_) { PHI__throw("iter error"); }
 
 	if (iter.node_ != nullptr) {
 		this->Erase_(
@@ -700,7 +697,7 @@ template<typename T, typename Hasher, typename EqualComparer>
 typename ChainingHashTable<T, Hasher, EqualComparer>::Iterator
 ChainingHashTable<T, Hasher, EqualComparer>::EraseThenReturnNextIterator(
 	const Iterator& iter) {
-	PHI__debug_if(this != iter.cht_) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this != iter.cht_) { PHI__throw("iter error"); }
 	Iterator r(this, this->next_node_(iter.node_));
 
 	if (iter.node_ != nullptr) {
@@ -716,7 +713,7 @@ template<typename T, typename Hasher, typename EqualComparer>
 typename ChainingHashTable<T, Hasher, EqualComparer>::Iterator
 ChainingHashTable<T, Hasher, EqualComparer>::EraseThenReturnPrevIterator(
 	const Iterator& iter) {
-	PHI__debug_if(this != iter.cht_) { PHI__throw__local("iter error"); }
+	PHI__debug_if(this != iter.cht_) { PHI__throw("iter error"); }
 	Iterator r(this, this->prev_node_(iter.node_));
 
 	if (iter.node_ != nullptr) {
@@ -944,7 +941,5 @@ ChainingHashTable<T, Hasher, EqualComparer>::ConstIterator::operator++() {
 
 }
 }
-
-#undef PHI__throw__local
 
 #endif

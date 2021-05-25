@@ -30,11 +30,6 @@ template<typename T> struct trait<T*> {
 	using Diff = diff_t;
 };
 
-template<typename Iterator> using GetType = typename trait<Iterator>::Type;
-template<typename Iterator> using GetValue = typename trait<Iterator>::Value;
-template<typename Iterator> using GetRef = typename trait<Iterator>::Ref;
-template<typename Iterator> using GetDiff = typename trait<Iterator>::Diff;
-
 template<typename Iterator> void base_on_forward() {
 	static_assert(
 		base_on<typename iterator::trait<Iterator>::Type, Type::Forward>::value,

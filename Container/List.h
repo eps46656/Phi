@@ -5,8 +5,6 @@
 #include "DoublyNode.h"
 #include "Pool.h"
 
-#define PHI__throw__local(desc) PHI__throw(cntr::List, __func__, desc)
-
 namespace phi {
 namespace cntr {
 
@@ -279,22 +277,22 @@ template<typename T> List<T>& List<T>::operator=(List&& list) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> T& List<T>::front() {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return static_cast<Node*>(this->node_.next())->value;
 }
 
 template<typename T> const T& List<T>::front() const {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return static_cast<Node*>(this->node_.next())->value;
 }
 
 template<typename T> T& List<T>::back() {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return static_cast<Node*>(this->node_.prev())->value;
 }
 
 template<typename T> const T& List<T>::back() const {
-	PHI__debug_if(this->size_ == 0) { PHI__throw__local("index error"); }
+	PHI__debug_if(this->size_ == 0) { PHI__throw("index error"); }
 	return static_cast<Node*>(this->node_.prev())->value;
 }
 
@@ -316,13 +314,13 @@ List<T>& List<T>::PushBack(Args&&... args) {
 }
 
 template<typename T> List<T>& List<T>::PushNodeFront(Node* node) {
-	PHI__debug_if(!node->sole()) { PHI__throw__local("node error"); }
+	PHI__debug_if(!node->sole()) { PHI__throw("node error"); }
 	++this->size_;
 	this->node_.PushNext(node);
 	return *this;
 }
 template<typename T> List<T>& List<T>::PushNodeBack(Node* node) {
-	PHI__debug_if(!node->sole()) { PHI__throw__local("node error"); }
+	PHI__debug_if(!node->sole()) { PHI__throw("node error"); }
 	++this->size_;
 	this->node_.PushPrev(node);
 	return *this;
@@ -344,7 +342,7 @@ template<typename T> List<T>& List<T>::PushListBack(List<T>& list) {
 #///////////////////////////////////////////////////////////////////////////////
 
 template<typename T> List<T>& List<T>::PopFront() {
-	PHI__debug_if(!this->size_) { PHI__throw__local("size error"); }
+	PHI__debug_if(!this->size_) { PHI__throw("size error"); }
 	--this->size_;
 	Node* node(static_cast<Node*>(this->node_.next()->Pop()));
 	node->value.~T();
@@ -353,7 +351,7 @@ template<typename T> List<T>& List<T>::PopFront() {
 }
 
 template<typename T> List<T>& List<T>::PopBack() {
-	PHI__debug_if(!this->size_) { PHI__throw__local("size error"); }
+	PHI__debug_if(!this->size_) { PHI__throw("size error"); }
 	--this->size_;
 	Node* node(static_cast<Node*>(this->node_.prev()->Pop()));
 	node->value.~T();
@@ -364,7 +362,7 @@ template<typename T> List<T>& List<T>::PopBack() {
 template<typename T> List<T>& List<T>::Pop(const Iterator& iter) {
 	PHI__debug_if(this != iter.list_ || iter.node_ == nullptr ||
 				  iter.node_ == &this->node_) {
-		PHI__throw__local("iter error");
+		PHI__throw("iter error");
 	}
 
 	--this->size_;
@@ -519,7 +517,5 @@ typename List<T>::ConstIterator& List<T>::ConstIterator::operator--() {
 
 }
 }
-
-#undef PHI__throw__local
 
 #endif

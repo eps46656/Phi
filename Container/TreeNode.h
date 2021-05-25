@@ -3,8 +3,6 @@
 
 #include "../define.h"
 
-#define PHI__throw__local(desc) PHI__throw(cntr::TreeNode, __func__, desc);
-
 namespace phi {
 namespace cntr {
 
@@ -72,7 +70,9 @@ struct TreeNode {
 
 #///////////////////////////////////////////////////////////////////////////////
 
+#if PHI__debug
 	inline void Check() const;
+#endif
 
 protected:
 	TreeNode* p_;
@@ -232,9 +232,7 @@ void TreeNode::RotateR() {
 }
 
 void TreeNode::Swap(TreeNode* x, TreeNode* y) {
-	PHI__debug_if(x == nullptr || y == nullptr) {
-		PHI__throw__local("nullptr");
-	}
+	PHI__debug_if(x == nullptr || y == nullptr) { PHI__throw("nullptr"); }
 
 	if (x->p_ == y) {
 		TreeNode* temp(x);
@@ -301,10 +299,10 @@ void TreeNode::Swap(TreeNode* x, TreeNode* y) {
 
 void TreeNode::InsertL(TreeNode* node) {
 	PHI__debug_if(this->l_ != nullptr) {
-		PHI__throw__local("this->l_ is not nullptr");
+		PHI__throw("this->l_ is not nullptr");
 	}
 
-	PHI__debug_if(!node->sole()) { PHI__throw__local("node is not sole"); }
+	PHI__debug_if(!node->sole()) { PHI__throw("node is not sole"); }
 
 	node->p_ = this;
 	this->l_ = node;
@@ -312,10 +310,10 @@ void TreeNode::InsertL(TreeNode* node) {
 
 void TreeNode::InsertR(TreeNode* node) {
 	PHI__debug_if(this->r_ != nullptr) {
-		PHI__throw__local("this->r_ is not nullptr");
+		PHI__throw("this->r_ is not nullptr");
 	}
 
-	PHI__debug_if(!node->sole()) { PHI__throw__local("node is not sole"); }
+	PHI__debug_if(!node->sole()) { PHI__throw("node is not sole"); }
 
 	this->r_ = node;
 	node->p_ = this;
@@ -331,7 +329,7 @@ If this has no child, this function release this, return nullptr.
 */
 TreeNode* TreeNode::EndRelease() {
 	PHI__debug_if(this->l_ != nullptr && this->r_ != nullptr) {
-		PHI__throw__local("this is not an end");
+		PHI__throw("this is not an end");
 	}
 
 	TreeNode* c;
@@ -373,6 +371,8 @@ TreeNode* TreeNode::EndRelease() {
 
 #///////////////////////////////////////////////////////////////////////////////
 
+#if PHI__debug
+
 void TreeNode::Check() const {
 	if (this->p_ != nullptr) {
 		if ((this == this->p_->l_) == (this == this->p_->r_)) {
@@ -384,9 +384,8 @@ void TreeNode::Check() const {
 	this->r_->Check();
 }
 
+#endif
 }
 }
-
-#undef PHI__throw__local
 
 #endif
